@@ -1,0 +1,2714 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <script type="text/javascript" src="http://127.0.0.1/scs_3_/d3.js"></script>
+                <style>
+            #result {
+            border: 1px dotted #ccc;
+            padding: 3px;
+            width:15%;
+            }
+            #result ul{
+            list-style-type:none;
+            padding: 0;
+            margin:0;
+            }
+            #result ul li {
+            padding: 5px 0;
+            
+            }
+            #result ul li:hover{
+            background: #eee;
+            }
+        </style>
+    </head>
+<link href="https://127.0.0.1/css/all.css" rel="stylesheet"/>
+<i class="fas fa-search fa-lg"></i>
+<body  onload="load_DB_list()">
+
+DB_active <input autocomplete ="off" type ="text" size="6" name="DB_active" id="DB_active" onKeyUp="set_DB(this.value)"/>
+<input id="file_" type="file" name="filecadr"  size="30"   onchange="" />
+<input id="file_status_name_id" type="input" name="filecadrstat"  size="30"   onchange="" />
+<button  type="button" onclick="save_file()" > <span>upload</span></button>
+<button  type="button" onclick="show_svg_image()" > <span>show</span></button>
+<button  type="button" onclick="show_file_line_front()" > <span>show file csv</span></button>
+<button  type="button" onclick="show_file_line_front_json()" > <span>show file json</span></button>
+<p id="rec_name"></p> set_value  <input autocomplete ="off" type ="text" size="60" name="attr_input_val" id="attr_input_val" onKeyUp="set_attr_val(this.value)"/>
+<div id="result"></div>
+
+<BR>
+ 
+<script type="text/javascript">
+
+var svg_base_image=d3.select("body").append("svg").attr("width", 0).attr("height",0);
+svg_base_image.append("rect")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("width", 0)
+       .attr("height", 0)
+       .style("stroke", 'pink')
+       .style("fill", "none")
+       .style("stroke-width", 3);
+const svg1 =  svg_base_image.append("g");//group everything for zoo
+var border=1;
+var bordercolor='black';
+var borderPath = svg1.append("rect")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("height", height)
+       .attr("width", width)
+       .style("stroke", "red")
+       .style("fill", "none")
+       .style("stroke-width", border);
+svg1.append('image')
+   .attr("xlink:href",'')
+   .attr("x",0)
+   .attr("y",0)
+   .attr("width", width)
+   .attr("height", height);
+   
+let zoom_image = d3.zoom()
+               .on('zoom', handleZoom_image);
+
+svg_base_image.call(zoom_image);
+
+  function handleZoom_image(e) {
+     svg1.attr('transform', e.transform);
+  }   
+   
+function show_svg_image(){
+let width = 700;
+let height = Math.min(500, width * 0.6);
+
+svg_base_image
+   .attr("width", width)
+   .attr("height", height);
+
+svg_base_image.select("rect")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("width", width)
+       .attr("height", height)
+       .style("stroke", 'pink')
+       .style("fill", "none")
+       .style("stroke-width", 3);
+
+//const svg1 =  svg_base_image.append("g");//group everything for zoom
+
+var borderPath = svg1.select("rect")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("height", height)
+       .attr("width", width)
+       .style("stroke", "red")
+       .style("fill", "none")
+       .style("stroke-width", border);
+
+svg1.select('image')
+   .attr("xlink:href","http://127.0.0.1/"+arguments[0])
+   .attr("x",0)
+   .attr("y",0)
+   .attr("width", width)
+   .attr("height", height);
+
+//////////////////////////
+
+////////////////////
+
+
+
+}
+
+
+
+
+function autocompleteMatch_DB(input){
+    if (input == ''){return [];}
+    let reg = new RegExp(input);
+    let ar=[];
+    DB_map.forEach(function f(val,key){if(val.match(reg))ar.push(key)});
+    return ar;
+}
+
+function set_input_DB(value){
+    active_DB_id=value;
+    active_DB_name=DB_map.get(value);
+    document.getElementById("DB_active").value=DB_map.get(value);
+    document.getElementById("collapsedUl_DB").remove();
+    if(!ontology_DB_list.has(value)){load_ontology();return;}
+    else{set_active_ontology()}
+}
+
+function set_DB(value){
+    var list_1 = "";
+    let word_ids = autocompleteMatch_DB(value);
+    for (var i=0; i<word_ids.length; i++){
+        list_1 = list_1 + '<li onclick="set_input_DB(this.id)" id='+ word_ids[i] +'> ' + DB_map.get(word_ids[i]) + '</li>';
+    }
+    document.getElementById("result").innerHTML = '<ul id="collapsedUl_DB">' + list_1 + '</ul>'
+}
+
+function set_attr_val(value){
+    var list_1 = "";
+    let word_ids = autocompleteMatch_attr(value);
+    for (var i=0; i<word_ids.length; i++){
+        list_1 = list_1 + '<li onclick="set_input_attr(this.id)" id='+ word_ids[i] +'> ' + id2name_attr.get(word_ids[i]) + '</li>';
+    }
+    document.getElementById("result").innerHTML = '<ul id="collapsedUl_DB">' + list_1 + '</ul>'
+}
+
+ 
+function autocompleteMatch_attr(input){
+    if (input == ''){return [];} 
+    let reg = new RegExp(input)
+    let ar=[];
+    id2name_attr.forEach(function f(val,key){if(val.match(reg)){ar.push(key)}});
+    return ar;
+}
+
+function set_input_attr(value){
+  var nnn=d3.select("#"+select_attr_cp_id).attr("nl_scpiece");
+  var vvv=d3.select("#"+select_attr_cp_id).attr("n_attr_val");
+  d3.select("#"+select_attr_cp_id).attr("n_attr_valid",value);
+//  d3.select("#"+select_attr_cp_id).attr("n_attr_val",id2name_attr.get(value));
+  d3.select("#t"+select_attr_cp_id).text(nnn+":"+vvv+":"+id2name_attr.get(value));
+  document.getElementById("rec_name").innerHTML='';
+  document.getElementById("attr_input_val").value = '';
+  document.getElementById("collapsedUl_DB").remove();
+}
+
+var active_DB_name="";
+
+var DB_map=new Map();   // use autocompleteMatch_DB (DB_id,DB_name)
+var active_DB_id;
+var select_attr_cp_id; // use for autocomplite attr value
+var frozen_cl_id=new Map();   // change to DB_map
+var cluster_id=1;
+var companent_id_counter=1;  
+var x_cluster_show=1000;
+var y_cluster_show=500;
+
+let reaction_on_menu_close=new Map();// 0 no reaction 1-... call menu_close_funk(id_cp);
+
+var ontology_DB_list=new Map();
+var ontology_DB_text=new Map();  // key DB_id value json_text with ontology
+
+var active_node_menu=new Array();
+var active_link_menu=new Map();
+
+var TM_item_attr_value=new Map();
+var TM_item_attr_idvalue=new Map();
+var TM_type_item_attr=new Map();
+
+var TM_all_item_id2DB_id=new Map();
+var TM_node_name=new Map();
+var TM_nodelink_attr_menu=new Map();
+var TM_nodelink_attr_show_menu=new Map();
+
+var TM_link_name=new Map();
+var TM_link_Tfrom=new Map();
+var TM_link_Tto=new Map();
+var TM_link_direction=new Map();  
+
+var TM_attr_name=new Map();
+var TM_attr_vtype=new Map();
+var TM_attr_Tparent=new Map();
+
+var nl_answer_list=new Map();
+
+function set_ontology_from_JSON(){
+  const j1=JSON.parse(ontology_DB_text.get(active_DB_id));
+  j1.forEach(function(obj){
+    if(obj.type == 'node'){
+      let id=obj.DB_id;
+      TM_all_item_id2DB_id.set(id,active_DB_id);
+      TM_node_name.set(id,obj.name);
+      let arr=new Array();
+      TM_nodelink_attr_show_menu.set(id,arr);
+      let item={item_id: 'a0',name: 'Id', icon: 'I', color: 'red', clickable: false,call_func: 'show_answ'};
+      (TM_nodelink_attr_show_menu.get(id)).push(item);
+      item={item_id: 'a1',name: 'type', icon: 'T', color: 'green', clickable: false,call_func: 'show_answ'};
+      (TM_nodelink_attr_show_menu.get(id)).push(item);
+    }
+  });
+  j1.forEach(function(obj){
+    if(obj.type == 'link'){
+       let id=obj.DB_id;
+       TM_all_item_id2DB_id.set(id,active_DB_id);
+       TM_link_name.set(id,obj.name);
+       TM_link_Tfrom.set(id,obj.From_node);
+       TM_link_Tto.set(id,obj.To_node);
+       TM_link_direction.set(id,obj.Direction);
+       let arr=new Array();
+       TM_nodelink_attr_show_menu.set(id,arr);
+       let item={item_id: 'a0',name: 'Id', icon: 'I', color: 'red', clickable: false,call_func: 'show_answ'};
+       (TM_nodelink_attr_show_menu.get(id)).push(item);
+       item={item_id: 'a1',name: 'type', icon: 'T', color: 'green', clickable: false,call_func: 'show_answ'};
+       (TM_nodelink_attr_show_menu.get(id)).push(item);
+    }
+  });
+  j1.forEach(function(obj){
+    if(obj.type == 'attr'){
+       let id=obj.DB_id;
+       TM_all_item_id2DB_id.set(id,active_DB_id);
+       let name=obj.name;
+       let Id_DB_parent=obj.Id_DB_parent;
+       TM_attr_name.set(id,name);
+       TM_attr_vtype.set(id,obj.vtype);
+       TM_attr_Tparent.set(id,Id_DB_parent);
+       let item={item_id: id,name: name, icon: '*', color: 'blue', clickable: false,call_func: 'set_node_attr'};
+       if(TM_nodelink_attr_show_menu.has(Id_DB_parent))(TM_nodelink_attr_show_menu.get(Id_DB_parent)).push(item);
+       if(!TM_nodelink_attr_menu.has(Id_DB_parent)){
+         let arr=new Array();
+         TM_nodelink_attr_menu.set(Id_DB_parent,arr);
+       }
+       (TM_nodelink_attr_menu.get(Id_DB_parent)).push(item);
+    }
+  }); 
+  set_active_ontology();
+}
+
+function set_active_ontology(){
+ active_node_menu.length=0;
+ active_link_menu.clear();
+ TM_node_name.forEach(function(name,id){
+    if(TM_all_item_id2DB_id.get(id) == active_DB_id){
+       let item={item_id: id,name: name, icon: '+', color: 'blue', clickable: false,call_func: 'set_node_type'};
+       active_node_menu.push(item);
+    }
+ });
+ TM_link_name.forEach(function(name,id){
+    if(TM_all_item_id2DB_id.get(id) == active_DB_id){
+      let idd=TM_link_Tfrom.get(id)+"_"+TM_link_Tto.get(id);
+      let item={item_id: id,name: name, icon: '+', color: 'blue', clickable: false,call_func: 'set_link_type'};
+      if(!active_link_menu.has(idd)){
+       let arr=new Array();
+       active_link_menu.set(idd,arr);
+      }
+      (active_link_menu.get(idd)).push(item);
+    }
+ });
+}
+
+
+
+function create_avaliableTypes_show(cp_id){ 
+  var item_show_map=TM_type_item_attr.get(d3.select("#"+cp_id).attr("item_id"))
+  var ll=[];
+  var set_t1={item_id: 'a0',name: 'Id', icon: '*', color: 'red', clickable: false,call_func: 'show_answ'};
+  ll.push(set_t1);
+  var set_t2={item_id: 'a1',name: 'NT', icon: '*', color: 'green', clickable: false,call_func: 'show_answ'};
+  ll.push(set_t2);
+  for(const [key,value] of item_show_map){
+      var set_t={item_id: 'n1',name: 'C', icon: '*', color: 'blue', clickable: false,call_func: 'show_answ'};
+      console.log(key+"-------")
+      set_t.item_id=key; 
+      set_t.name=TM_attr_name.get(key); 
+      ll.push(set_t);
+   }
+   return ll;
+}
+
+function show_image_file(type_id,id,file_name){
+    let finfo={type_id:"",id:"",name:""}
+    finfo.type_id=type_id
+    finfo.id=id
+    finfo.name=file_name
+    var xmlhttp=new XMLHttpRequest();
+    let json=JSON.stringify(finfo);
+      xmlhttp.onreadystatechange=function(){
+          if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+              show_svg_image(j1.file_path)
+          }
+          if(xmlhttp.readyState==2){} 
+     }
+  let addr="load_file_path";
+  xmlhttp.open("POST","/go/gr_db/"+addr,true);
+  xmlhttp.send(json);
+
+
+}
+
+function menu_close_funk(c_id){
+   var t_map=new Map();
+   var Nd=d3.select("#"+c_id);
+   var tt=Nd.data()[0].attr_show;
+   for(var i=0;i<tt.length;i++){t_map.set(tt[i],1);}
+   switch(reaction_on_menu_close.get(c_id)){
+    case 1: 
+       var t=TM_item_attr_value.get(c_id);
+       var tid=TM_item_attr_idvalue.get(c_id);
+       var ans='';
+       var id_n=Nd.attr('id');
+       if(t_map.has('a0')){ans+=Nd.attr('node_id')+'\n';}
+       if(t_map.has('a1')){ans+=Nd.attr("nl_scpiece")+'\n';}
+       for(const [key,value] of t){
+           if(t_map.has(key)){
+           if(TM_attr_vtype.get(key)=="file"){
+             show_image_file(key,tid.get(key),value)
+             ans+=value+'\n';
+           }else{
+             ans+=value+'\n';
+             
+           }
+           }
+       }
+       d3.select("#t"+c_id).text(ans);
+    break;
+    case 2: 
+     d3.selectAll('circle').each(function(d,i){//console.log(this)
+       var Ndd=d3.select(this);
+       if((Ndd.attr('nl_type')==Nd.attr('nl_type'))&&(Ndd.attr('item_id')==Nd.attr('item_id'))){
+          var id_n=Ndd.attr('id');
+          var t=TM_item_attr_value.get(id_n);
+          var ans='';
+          var dy=0;
+          if(t_map.has('a0')){ans+=Ndd.attr('node_id')+':';}
+          if(t_map.has('a1')){ans+=d3.select("#"+c_id).attr("nl_scpiece")+':';}
+          for(const [key,value] of t){
+              if(t_map.has(key)){ans+=value+':';}
+          }
+       d3.select("#t"+id_n).text(ans);
+     }})
+    break;
+    default: alert("no determin reaction on clck"+ reaction_on_menu_close.get(cp_id));break;
+  }
+       reaction_on_menu_close.set(c_id,0);
+
+}
+
+
+function create_cl_node(id,xx=500,yy=500){
+     var set_t={id: 'n1',x: 500,y: 500};
+     set_t.id=id;
+     set_t.x=xx;
+     set_t.y=yy;
+     return set_t;
+};
+function create_link(tn,sn){
+     var set_t={source: 500,target: 500};
+     set_t.source=tn;
+     set_t.target=sn;
+      return set_t;
+};
+function set_obj_coordinate(){
+  let c_id=arguments[0];
+  let xx=arguments[1];
+  let yy=arguments[2];
+                                           let Node_=d3.select("#"+c_id);                                             d3.select("#t"+c_id).attr("x",xx).attr("y",yy)
+                                             if(Node_.attr('flower_on')==1){
+                                             d3.select("#M"+cp_id).attr("transform","translate("+xx+","+yy+")")};
+                                            Node_.attr("cx",xx).attr("cy",yy);
+                                        for(let LinkID of Node_.data()[0].link_list)
+                                          { let Link_=d3.select('#'+linkPrefix+LinkID);
+                                            if(Link_.data()[0]){
+                                            if(d3.select("#"+Link_.data()[0].source).attr('id')==c_id)
+                                              { Link_.attr('x1', xx);
+                                                Link_.attr('y1', yy);
+                                              }
+                                              else{ Link_.attr('x2', xx);
+                                                    Link_.attr('y2', yy);
+                                                  };
+                                          }}
+
+}
+
+function show_claster(){
+ var cl_id=arguments[0];
+  var data_n=[];
+  var data_l=[];
+  var n_id2i=new Map();
+  var node_index=0;
+  d3.selectAll('circle').each(function(d,i){//console.log(this)
+     if(d3.select(this).attr("claster_id")==cl_id){
+ //       set_obj_coordinate(d3.select(this).attr("id"),x_cluster_show,y_cluster_show);
+        let nid=d3.select(this).attr("id");
+        if(n_id2i.has(nid)){}else{
+          var tt=create_cl_node(nid);
+          data_n.push(tt);
+          n_id2i.set(tt.id,node_index++);
+        }
+        
+        if(d3.select(this).attr("nl_type")=='alink'){
+          let from_id=d3.select(this).attr("link_from");
+        if(n_id2i.has(from_id)){}else{
+          var tt=create_cl_node(from_id);
+          data_n.push(tt);
+          n_id2i.set(tt.id,node_index++);
+        }
+          
+          let to_id=d3.select(this).attr("link_to");
+        if(n_id2i.has(to_id)){}else{
+          var tt=create_cl_node(to_id);
+          data_n.push(tt);
+          n_id2i.set(tt.id,node_index++);
+        }
+          
+//          console.log(d3.select(this).attr("link_from")+"|"+d3.select(this).attr("link_to"));
+          if(from_id==to_id){
+            let ind;
+            data_l.push(create_link(n_id2i.get(nid),n_id2i.get(from_id)));
+          }else{
+            data_l.push(create_link(n_id2i.get(from_id),n_id2i.get(nid)));
+            data_l.push(create_link(n_id2i.get(nid),n_id2i.get(to_id)));
+          }
+        }
+      }
+  });
+    const simulation = d3.forceSimulation(data_n)
+    .force("center", d3.forceCenter(x_cluster_show,y_cluster_show).strength(.3)) // Attraction to the center of the svg area
+    .force("charge", d3.forceManyBody().strength(.01)) // Nodes are attracted one each other of value is > 0
+    .force("collide", d3.forceCollide().radius(50))//.strength(.1).radius(50).iterations(1)) // Force that avoids circle overlapping
+    .force("link",d3.forceLink(data_l))//.distance(function(d){return d.distance;}).strength(1));
+// Apply these forces to the nodes and update their positions.
+// Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
+;
+
+simulation.tick(100);
+simulation.stop();
+
+ var node_force=simulation.nodes();
+  
+  for(let i=0;i< data_n.length; i++){ 
+        
+        set_obj_coordinate(data_n[i].id,node_force[i].x,node_force[i].y);
+     
+  }  
+}
+function load_select_grph(){
+      let arr=new Array();      
+        if(!confirm("load"))return;
+        let save_name=prompt("input name ",'');
+        let j={};
+        j.select_name=save_name;
+        arr.push(j);
+      
+      var xmlhttp=new XMLHttpRequest();
+      let json=JSON.stringify(arr);
+      let current_cluster_id="sc"+(++cluster_id);
+      xmlhttp.onreadystatechange=function(){
+          if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+// restore graph              
+              let save_id2current_id=new Map();
+              for( const jjj of j1.gr_item){
+                 const idd=jjj.id;
+                 if(jjj.type=="node"  || jjj.type=="link" || jjj.type=="n_attr"){
+                   save_id2current_id.set(idd,"Circlepoint"+(++id_counter));
+                 }
+              }
+              
+              for( const jj of j1.gr_item){
+                 const xx=jj.cx;
+                 const yy=jj.cy;
+                 const item_id=jj.item_id;
+                 const idd=save_id2current_id.get(jj.id);
+                 if(jj.type=="node"){
+                   DrawCircle(svg_answer,idd ,'node' ,avaliableTypes_node_cntr,xx,yy);
+                   d3.select("#"+idd).attr("nl_scpiece",TM_node_name.get(item_id));
+                   d3.select("#t"+idd).text(TM_node_name.get(item_id)); 
+                   d3.select("#"+idd).attr("item_id",item_id);
+                   d3.select("#"+idd).attr("claster_id",current_cluster_id); 
+                   for(var ii=0;ii<jj.attr_show.length; ii++){
+                     d3.select("#"+idd).data()[0].attr_show[ii]=jj.attr_show[ii];
+                   }
+     
+
+                 }
+                 if(jj.type=="link"){
+                   
+                   let fln=save_id2current_id.get(jj.link_from);
+                   let sln=save_id2current_id.get(jj.link_to);
+                   Draw_link(svg_answer,fln,idd,sln,'link',TM_link_name.get(item_id),'',xx,yy);
+                 if(!item_id.match('::')){
+                   d3.select("#"+idd).attr("nl_scpiece",item_id);
+                   let delta=jj.loprt;
+                   d3.select("#"+idd).attr("loprt",delta);
+                   d3.select("#t"+idd).text(item_id+":"+delta); 
+
+                   }
+                 d3.select("#"+idd).attr("item_id",item_id);
+                   d3.select("#"+idd).attr("claster_id",current_cluster_id); 
+                   for(var ii=0;ii<jj.attr_show.length; ii++){
+                     d3.select("#"+idd).data()[0].attr_show[ii]=jj.attr_show[ii];
+                   }
+                 }
+                 if(jj.type=="n_attr"){
+                   const at_val=jj.n_attr_val
+                   const idd_parent=save_id2current_id.get(jj.Id_DB_parent);
+                   Draw_attr(svg_answer,idd_parent,idd,item_id,at_val,xx,yy);
+                   d3.select("#"+idd).attr("claster_id",current_cluster_id);
+                   if(flag_json==1 && jj.item_id=="link_obj"){
+                     const ttt='<p style="color:blue">'+TM_attr_name.get(d3.select("#"+idd_parent).attr("item_id"))+'</p>';
+                     document.getElementById("l__json"+json_link_invert_map.get(jj.n_attr_val)).innerHTML=ttt;
+                   }
+                 }
+              }
+// restore parse 
+              if(flag_json==0){
+                 let table=document.getElementById('inup_table');
+                 let rws=0;
+                 if(table.rows !== 'undefined'){rws=table.rows.length;}
+                 var row;
+                 if(rws==0){row=table.insertRow(0);}else{row=table.row[0]}
+                 row.length=0;
+                 for( const jj of j1.parse_collum){
+                        const j=jj.jcol;
+                        let cell=row.insertCell(j);
+                        cell.innerHTML='<input id="separator1_'+j+'" type="input"   size="4"  value="'+jj.sep1+'"/>'+
+                                       '<input id="separator2_'+j+'" type="input"   size="4"  value="'+jj.sep2+'"/>'+
+                                       '<input id="separator3_'+j+'" type="input"   size="4"  value="'+jj.sep3+'"/>'+
+                                       '<button  type="button" onclick="show_collum('+j+')" > <span>A</span></button>';
+                 }
+// restore file2graph link
+                 if(rws==0){
+                   row=table.insertRow(1);
+                 }else{
+                   row=table.row[1];
+                 }
+                 row.length=0;
+                 for( const jj of j1.link_collum){
+                    let t_html='';
+                    let j=jj.jcol;
+                    let cell=row.insertCell(j);
+                    if(typeof collum_id2N_lst_array[j] !== 'undefined'){
+                      collum_id2N_lst_array[j].length=0;
+                    }else{;
+                      collum_id2N_lst_array[j]=new Array;
+                    }
+                    switch(jj.link_type){
+                    case 'single': case 'array':
+                        N_lst_save_link.set(NN_lst,jj.link_item[0].Gr_name);
+                        collum_id2N_lst_array[j].push(NN_lst);
+                        N_lst_save_arg.set(NN_lst,j+':_:0:_:0');
+                        t_html='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">'+jj.link_item[0].Gr_name+'</span></button>'; 
+                        NN_lst++;
+                        break;
+                    case 'array_array':
+                      N_lst_save_link.set(NN_lst,jj.link_item[0].Gr_name);
+                      N_lst_save_arg.set(NN_lst,jj.link_item[0].File_pos);
+                      collum_id2N_lst_array[j].push(NN_lst);
+                      const key1=jj.link_item[0].File_pos.split(':_:');
+                      t_html='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7><tr><th>';
+                      t_html+='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">'+jj.link_item[0].Gr_name+'</span></button>';
+                      NN_lst++;
+                      N_lst_save_link.set(NN_lst,jj.link_item[1].Gr_name);
+                      N_lst_save_arg.set(NN_lst,jj.link_item[1].File_pos);
+                      collum_id2N_lst_array[j].push(NN_lst);
+                      t_html+='</th><th><table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7><tr><th>';
+                      t_html+='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">'+jj.link_item[1].Gr_name+'</span></button>';
+                      t_html+='</th></tr></table></th></tr></table>';
+                      NN_lst++;
+                        break;
+                    case 'array_map': 
+                        t_html+='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+                        for(const jjj of jj.link_item){
+                           N_lst_save_link.set(NN_lst,jjj.Gr_name);
+                           N_lst_save_arg.set(NN_lst,jjj.File_pos);
+                           collum_id2N_lst_array[j].push(NN_lst);
+                           const key=jjj.File_pos.split(':_:');
+                           id_link='l_'+NN_lst;
+                           t_html+='<tr><th>'+key[2]+'</th><th>';
+                           t_html+='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="'+id_link+'">'+jjj.Gr_name+'</span></button></th></tr>';
+                           NN_lst++;
+                        }    
+                        t_html+='</table>';
+                        break;
+                    }
+                    cell.innerHTML=t_html;
+                    
+                 }}
+          }
+          if(xmlhttp.readyState==2){ } 
+  }
+  let addr="load_grf";
+  xmlhttp.open("POST","/go/gr_db/"+addr,true);
+  xmlhttp.send(json);
+}
+
+var flag_json=0;
+
+function save_select_component(ss_key,cp_id){
+      let front_json={};
+      front_json.gr_item=new Array();
+      front_json.Separator=document.getElementById("file_status_name_id").value;
+ //     let arr=new Array();
+      let addr="select_grf";
+      if(ss_key==1){
+        if(!confirm("save"))return;
+        let save_name=prompt("input name ",'');
+        front_json.select_name=save_name;
+        addr = "save_grf";
+      }  
+      if(ss_key==2){
+        if(!confirm("insert"))return;
+        front_json.select_name="save_name";
+        addr = "update_DB_file";
+      }
+      if(ss_key==3){
+        if(!confirm("update_grph"))return;
+        front_json.select_name="save_name";
+        addr = "update_DB_grph";
+      }
+      if(ss_key==4){
+        if(!confirm("insert_json_file"))return;
+        front_json.select_name="save_name";
+        addr = "insert_json_file";
+        flag_json=1
+      }
+      if(ss_key>0 & ss_key<3 & flag_json==0){
+      if(document.getElementById('inup_table')!== undefined && 
+         document.getElementById('inup_table').rows!== undefined &&
+         document.getElementById('inup_table').rows[0]!== undefined &&
+  //       document.getElementById('inup_table').rows[0].cell!== undefined &&
+         document.getElementById('inup_table').rows[0].cells.length>0){
+ //         alert("qqqqqqq");
+          front_json.parse_collum=new Array();
+          front_json.link_collum=new Array();
+          for(var jc=0;jc<document.getElementById('inup_table').rows[0].cells.length;jc++){
+          
+            let p_col={};
+            p_col.jcol=jc;
+            p_col.sep1=document.getElementById('separator1_'+jc).value;
+            p_col.sep2=document.getElementById('separator2_'+jc).value;
+            p_col.sep3=document.getElementById('separator3_'+jc).value;
+            front_json.parse_collum.push(p_col);
+            let type_coll='single';
+            if(p_col.sep1.length>0){type_coll='array';}
+            if(p_col.sep2.length>0){type_coll='array_array';}
+            if(p_col.sep3.match('=')){type_coll='array_map';}
+            let l_col={};
+            l_col.jcol=jc;
+            l_col.link_type=type_coll;
+            l_col.link_item=new Array();
+            for (const N_lst of collum_id2N_lst_array[jc]){
+              let tmp={};
+              tmp.File_pos=N_lst_save_arg.get(N_lst);
+              tmp.Gr_name=N_lst_save_link.get(N_lst);
+              l_col.link_item.push(tmp);
+            }
+            front_json.link_collum.push(l_col);
+
+          }
+          
+          
+          
+        }
+      }
+      var str='';
+      if(select2array(front_json.gr_item,cp_id)){str='no answer has specified  ';} 
+      if(ss_key==0){if(!confirm(str+"search?"))return;}
+      var xmlhttp=new XMLHttpRequest();
+      let json=JSON.stringify(front_json);
+      xmlhttp.onreadystatechange=function(){
+          if(xmlhttp.readyState==4 && xmlhttp.status==200){
+             if(addr.match('select_grf')){
+              const j1=JSON.parse(xmlhttp.responseText);
+              var table=document.getElementById('total_table');
+              var rws=table.rows.length;
+              if(rws>0){for(var i=rws-1;i>=0; i--){table.deleteRow(i);}}
+              var N_ans=1;
+              var i=0;
+              for(const ell of j1.str_list){
+                    var row=table.insertRow(i);
+                        cell=row.insertCell(0);
+                        cell.innerHTML=i;
+                    for(var j=1;j<ell.Filds.length+1; j++){
+                    if(j!=1){
+                        var cell;
+                        cell=row.insertCell(j);
+                        if(TM_attr_vtype.get(j1.collum_type[j-1])=="file"){
+                         cell.innerHTML='<button type="button" id="button_st_'+i+'" onclick=show_image_file("'+j1.collum_type[j-1]+'","'+ell.Filds_id[j-1]+'","'+ell.Filds[j-1]+'") >'+ell.Filds[j-1]+'</button>'
+                        }else{
+                          cell.innerHTML=ell.Filds[j-1];
+                        }
+                    }else{
+                        var cell;
+                        cell=row.insertCell(j);
+                        cell.innerHTML='<button type="button" id="button_st_'+i+'" onclick=show_claster("'+ell.Filds[j-1]+'") >'+ell.Filds[j-1]+'</button>';
+      
+                    }}
+                    i++;
+              }
+  //            }
+//  var TM_item_attr_value=new Map();
+//var TM_type_item_attr=new Map();
+
+              for(const ell of j1.item_list){
+               if(ell.ttype=="node"){
+                 let idd=ell.id
+                 console.log(ell);
+                 if(!(nl_answer_list.has(idd))){
+                   nl_answer_list.set(idd,ell.type);
+                   let xx=100;
+                   let yy=200;
+                   if(!(TM_type_item_attr.has(ell.type))){
+                     let xx=new Map();
+                     TM_type_item_attr.set(ell.type,xx)
+                   }
+                   if(!(TM_item_attr_value.has(idd))){
+                     let xx=new Map();
+                     let yy=new Map();
+                     TM_item_attr_value.set(idd,xx)
+                     TM_item_attr_idvalue.set(idd,yy)
+                   }
+                   
+                   for(let i=0;i<ell.attrv_list.length;i+=2){
+                      console.log(i+"|"+ell.attrv_list[i]+"|"+ell.type)
+                      TM_item_attr_value.get(idd).set(ell.attrv_list[i],ell.attrv_list[i+1]); 
+                      TM_item_attr_idvalue.get(idd).set(ell.attrv_id_list[i],ell.attrv_id_list[i+1]); 
+                      TM_type_item_attr.get(ell.type).set(ell.attrv_list[i],1); 
+                   }
+                   DrawCircle(svg_answer,idd ,'anode' ,avaliableTypes_anode_cntr,xx,yy);
+                   d3.select("#"+idd).attr("nl_scpiece",TM_node_name.get(ell.type));
+                   d3.select("#"+idd).attr("item_id",ell.type);
+                   d3.select("#t"+idd).text(TM_node_name.get(ell.type)+' '+idd+' '+ell.type); 
+                   d3.select("#"+idd).attr("node_id",ell.id); 
+                   d3.select("#"+idd).attr("claster_id",ell.id_component); 
+                  }
+             }} 
+              for(const ell of j1.item_list){
+               if(ell.ttype=="link"){
+                 var idd=ell.id
+                 if(!(nl_answer_list.has(idd))){
+                   nl_answer_list.set(idd,1);
+                   let fln=ell.id_from;
+                   let sln=ell.id_to;
+                   let cp_id=idd;
+                   let xx;let yy;
+                   if(fln==sln){
+                      xx=100;//fnode_map_x.get('n'+nl_i[0]);
+                      yy=200;//fnode_map_y.get('n'+nl_i[0]);
+                   }else{
+                      xx=(parseInt(d3.select("#"+fln).attr("cx"),10)+
+                             parseInt(d3.select("#"+sln).attr("cx"),10))/2;
+                      yy=(parseInt(d3.select("#"+fln).attr("cy"),10)+
+                             parseInt(d3.select("#"+sln).attr("cy"),10))/2;
+                   }                     
+                   Draw_link(svg_answer,fln,cp_id,sln,'alink',TM_link_name.get(ell.type),'',xx,yy);
+                   d3.select("#"+cp_id).attr("claster_id",ell.id_component); 
+             
+              }}}
+             }else{
+              alert("save or update done");
+             } 
+          }
+          if(xmlhttp.readyState==2){ } 
+  }
+  xmlhttp.open("POST","/go/gr_db/"+addr,true);
+  console.log(json);
+  xmlhttp.send(json);
+     
+}      
+      
+function load_DB_list(){
+  var xmlhttp=new XMLHttpRequest();
+  let json=JSON.stringify({DB:"All",user:"root"});
+  xmlhttp.onreadystatechange=function(){
+          if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+              for (const el of j1){DB_map.set(el.id,el.name);}
+              alert("please chose active DB");
+          }
+          if(xmlhttp.readyState==2){ } 
+  }
+  xmlhttp.open("POST","/go/gr_db/get_DB_list",true);
+  xmlhttp.send(json);
+}
+
+function load_ontology(){
+  var xmlhttp=new XMLHttpRequest();
+  const name = DB_map.get(active_DB_id);
+  const ask_obj={id: active_DB_id ,name: DB_map.get(active_DB_id)};
+  let json=JSON.stringify(ask_obj);
+  xmlhttp.onreadystatechange=function(){
+  if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              ontology_DB_text.set(active_DB_id,xmlhttp.responseText);
+              ontology_DB_list.set(active_DB_id,1);
+              set_ontology_from_JSON();
+              }
+  if(xmlhttp.readyState==2){ } 
+  }
+  xmlhttp.open("POST","/go/gr_db/load_ontology",true);
+  xmlhttp.send(json);
+}    
+function save_file(){
+        var cp_id=arguments[1]
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+           if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+              var nnn=d3.select("#"+cp_id).attr("nl_scpiece");
+              d3.select("#"+cp_id).attr("n_attr_val",j1.id);
+              d3.select("#t"+cp_id).text(nnn+":"+j1.id);
+            }
+            if(xmlhttp.readyState==2){ } 
+        }
+        xmlhttp.open("POST","/go/gr_db/upload_file_loader",true);
+        var file=document.getElementById("file_");
+        var file_status= document.getElementById("file_status_name_id").value;
+        var formdata=new FormData();
+        formdata.append("DB_name",active_DB_name);
+        formdata.append("myfile_name",file.files[0].name);
+        formdata.append("myfile",file.files[0]);
+        xmlhttp.send(formdata);
+}
+
+function upload_file(){
+        var cp_id=arguments[1]
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+           if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+              var nnn=d3.select("#"+cp_id).attr("nl_scpiece");
+              d3.select("#"+cp_id).attr("n_attr_val",j1.id);
+              d3.select("#t"+cp_id).text(nnn+":"+j1.id);
+            }
+            if(xmlhttp.readyState==2){ } 
+        }
+        xmlhttp.open("POST","/go/gr_db/upload_file",true);
+        var file=document.getElementById("file_");
+        var file_status= document.getElementById("file_status_name_id").value;
+        var formdata=new FormData();
+        formdata.append("DB_name",arguments[0]);
+        formdata.append("myfile_name",file.files[0].name);
+        formdata.append("myfile",file.files[0]);
+        xmlhttp.send(formdata);
+       
+}
+  var collum_id2N_lst_array=new Array();
+  var N_lst_key=new Map();
+  var N_lst_save_arg=new Map();
+  var N_lst_save_link=new Map();
+  var NN_lst=3;
+  var collum_set=new Map();
+  var attr_first_link_id;
+function set_attr_link_first(cp_id){
+  attr_first_link_id= cp_id;
+}  
+function set_link(n_lst){
+  const ttt='<p style="color:blue">'+d3.select("#"+attr_first_link_id).attr("nl_scpiece")+'</p>';
+  const id_link='l_'+n_lst;
+  document.getElementById(id_link).innerHTML=ttt;
+  N_lst_save_link.set(n_lst,ttt);
+  let n_id=d3.select("#"+attr_first_link_id).attr("item_id");
+  let xx=parseInt(d3.select("#"+attr_first_link_id).attr("cx"),10)+50;
+  let yy=parseInt(d3.select("#"+attr_first_link_id).attr("cy"),10);
+  let a_id="Circlepoint"+(++id_counter);
+  Draw_attr(svg_base,attr_first_link_id,a_id,'link_obj',N_lst_save_arg.get(n_lst),xx,yy);
+} 
+
+function show_collum(){
+ var jc=arguments[0];
+ if((document.getElementById('separator1_'+jc).value).length==0){return}
+  var table=document.getElementById('inup_table');
+  var rws=table.rows.length;
+  if((document.getElementById('separator3_'+jc).value).match('=')){
+  var N_lst=new Map();
+ for(var i=2;i<rws; i++){
+     var text=document.getElementById('inup_table').rows[i].cells[jc].innerHTML;     
+     var ll=text.split(document.getElementById('separator1_'+jc).value);
+     var tab_a='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+     for(var jj=0;jj<ll.length;jj++){
+     var bb=ll[jj].split(document.getElementById('separator2_'+jc).value);
+     tab_a+='<tr><table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+     for(var jjj=0;jjj<bb.length;jjj++){
+      if(bb[jjj].match('=')){
+      var cc=bb[jjj].split(document.getElementById('separator3_'+jc).value);
+//     alert(i+'=|='+cc[0]+'|||'+cc[1]);
+         if(! N_lst.has(cc[0])){N_lst.set(cc[0],NN_lst);N_lst_key.set(NN_lst,cc[0]);
+         N_lst_save_arg.set(NN_lst,jc+':_:2:_:'+cc[0]);
+         N_lst_save_link.set(NN_lst,"Link");
+         NN_lst++}
+         tab_a+='<tr><th>'+cc[0]+'</th><th>'+cc[1]+'</th></tr>';
+     }else{
+         var cc1='unformated';
+         if(! N_lst.has(cc1)){N_lst.set(cc1,NN_lst);N_lst_key.set(NN_lst,cc1);
+         N_lst_save_arg.set(NN_lst,jc+':_:2:_:'+cc1);
+         N_lst_save_link.set(NN_lst,"Link");
+         NN_lst++}
+         tab_a+='<tr><th>'+cc1+'</th><th>'+bb[jjj]+'</th></tr>';
+     }
+     }
+     tab_a+='</table></tr>';}
+     tab_a+='</table>';
+     document.getElementById('inup_table').rows[i].cells[jc].innerHTML=tab_a;
+  }
+    if(!collum_set.has(jc)){
+      var tab_a='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+     let id_link;
+      collum_id2N_lst_array[jc].length=0;
+      N_lst.forEach(function f(val,key){
+         tab_a+='<tr><th>'+key+'</th><th>';
+         id_link='l_'+val;
+         collum_id2N_lst_array[jc].push(val);
+         tab_a+='<button  type="button" onclick="set_link('+val+')" > <span id="'+id_link+'">Link</span></button></th></tr>';
+      });    
+      tab_a+='</table>';
+      document.getElementById('inup_table').rows[1].cells[jc].innerHTML=tab_a;
+    } 
+  }else{
+  for(var i=1;i<rws; i++){
+     var text=document.getElementById('inup_table').rows[i].cells[jc].innerHTML;
+     var ll=text.split(document.getElementById('separator1_'+jc).value);
+     var tab_a='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+     for(var jj=0;jj<ll.length;jj++){
+     var bb=ll[jj].split(document.getElementById('separator2_'+jc).value);
+     tab_a+='<tr><th>'+bb[0]+'</th>';
+     for(var jjj=1;jjj<bb.length;jjj++){
+       tab_a+='<th><table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>';
+       var cc=bb[jjj].split(document.getElementById('separator3_'+jc).value);
+       for(var ii=0;ii<cc.length;ii++){tab_a+='<tr><th>'+cc[ii]+'</th></tr>';}
+       tab_a+='</table></th>';
+     }
+     tab_a+='</tr>';}
+     tab_a+='</table>';
+     document.getElementById('inup_table').rows[i].cells[jc].innerHTML=tab_a;
+  }
+    if(!collum_set.has(jc)){
+       collum_id2N_lst_array[jc].length=0;
+       var tab_a='<table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7><tr><th>';
+       tab_a+='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">Link</span></button>';
+         collum_id2N_lst_array[jc].push(NN_lst);
+         N_lst_save_link.set(NN_lst,"Link");
+       N_lst_save_arg.set(NN_lst,jc+':_:1:_:0');NN_lst++;
+       tab_a+='</th><th><table border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7><tr><th>';
+       tab_a+='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">Link</span></button>';
+       tab_a+='</th></tr></table></th></tr></table>';
+         N_lst_save_link.set(NN_lst,"Link");
+         collum_id2N_lst_array[jc].push(NN_lst);
+       N_lst_save_arg.set(NN_lst,jc+':_:1:_:1');NN_lst++;
+       document.getElementById('inup_table').rows[1].cells[jc].innerHTML=tab_a;
+   }
+  }
+}
+var json_link_map=new Map();
+var json_link_invert_map=new Map();
+function set_link_json(n_lst){
+  const ttt='<p style="color:blue">'+d3.select("#"+attr_first_link_id).attr("nl_scpiece")+'</p>';
+  const id_link='l__json'+n_lst;
+  document.getElementById(id_link).innerHTML=ttt;
+  N_lst_save_link.set(n_lst,ttt);
+  let n_id=d3.select("#"+attr_first_link_id).attr("item_id");
+  let xx=parseInt(d3.select("#"+attr_first_link_id).attr("cx"),10)+50;
+  let yy=parseInt(d3.select("#"+attr_first_link_id).attr("cy"),10);
+  let a_id="Circlepoint"+(++id_counter);
+  Draw_attr(svg_base,attr_first_link_id,a_id,'link_obj',json_link_map.get(n_lst),xx,yy);
+
+  
+  
+}
+function show_file_line_front_json(){
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+           if(xmlhttp.readyState==4 && xmlhttp.status==200){ 
+              const j1=JSON.parse(xmlhttp.responseText);
+              console.log(j1);
+              let table=document.getElementById('inup_table');
+              let rws=table.rows.length;
+              let i=0;
+              if(rws>1){for(i=rws-1;i>=2; i--){table.deleteRow(i);}}
+              i=0;
+              for(const ell of j1.json_item){
+                        var row=table.insertRow(i);
+                        i++;
+                        let cell=row.insertCell(0);
+                        json_link_map.set(i,ell.Name);
+                        json_link_invert_map.set(ell.Name,i);
+                        flag_json=1;
+                        cell.innerHTML='<button  type="button" onclick="set_link_json('+i+')" > <span id="l__json'+i+'">Link</span></button>';
+                        let cell1=row.insertCell(1);
+                        cell1.innerHTML=ell.Name;
+                        let cell2=row.insertCell(2);
+                        cell2.innerHTML=ell.N_v2id_string;
+                        let cell3=row.insertCell(3);
+                        cell3.innerHTML=ell.N_arr_level;
+              } 
+              }
+              if(xmlhttp.readyState==2){ } 
+        }
+        xmlhttp.open("POST","/go/gr_db/show_json_file",true);
+        var file=document.getElementById("file_");
+        var file_status= document.getElementById("file_status_name_id").value;
+        var formdata=new FormData();        
+        let ask_obj={DB_name: "active_DB_name",Separator: "\t"};
+        ask_obj.DB_name=active_DB_name
+        ask_obj.Separator=file_status
+        let json=JSON.stringify(ask_obj);
+        xmlhttp.send(json);
+
+}
+function show_file_line_front(){   //load_csvfile
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+           if(xmlhttp.readyState==4 && xmlhttp.status==200){ 
+              const j1=JSON.parse(xmlhttp.responseText);
+              console.log(j1);
+              let table=document.getElementById('inup_table');
+              let rws=table.rows.length;
+              let i=0;
+              if(rws>1){for(i=rws-1;i>=2; i--){table.deleteRow(i);}}
+              for(const ell of j1){
+                    if(i==0){
+                    var row=table.insertRow(i);
+                    for(let j=0;j<ell.fields.length; j++){
+                        const s123_0='';
+                        const s123_1='';
+                        const s123_2='';
+                        let cell=row.insertCell(j);
+                        cell.innerHTML='<input id="separator1_'+j+'" type="input"   size="4"  value="'+s123_0+'"/>'+
+                                       '<input id="separator2_'+j+'" type="input"   size="4"  value="'+s123_1+'"/>'+
+                                       '<input id="separator3_'+j+'" type="input"   size="4"  value="'+s123_2+'"/>'+
+                                       '<button  type="button" onclick="show_collum('+j+')" > <span>A</span></button>';
+                    }
+                    i++;
+                    }
+                    if(i==1){
+                    var row=table.insertRow(i);
+                    for(let j=0;j<ell.fields.length; j++){
+                        let cell=row.insertCell(j);
+                        collum_id2N_lst_array[j]=new Array;
+                        N_lst_save_link.set(NN_lst,"Link");
+                        collum_id2N_lst_array[j].push(NN_lst);
+                        N_lst_save_arg.set(NN_lst,j+':_:0:_:0');
+                        cell.innerHTML='<button  type="button" onclick="set_link('+NN_lst+')" > <span id="l_'+NN_lst+'">Link</span></button>';
+                        NN_lst++;
+                    }
+                    i++;
+                    }
+                    var row=table.insertRow(i);
+                    for(let j=0;j<ell.fields.length; j++){
+                        let cell=row.insertCell(j);
+                        cell.innerHTML=ell.fields[j];
+                    }
+            }}
+              if(xmlhttp.readyState==2){ } 
+        }
+        xmlhttp.open("POST","/go/gr_db/show_file_csv",true);
+        var file=document.getElementById("file_");
+        var file_status= document.getElementById("file_status_name_id").value;
+        var formdata=new FormData();
+        let ask_obj={DB_name: "active_DB_name",Separator: "\t"};
+        ask_obj.DB_name=active_DB_name;
+        ask_obj.Separator=file_status
+        let json=JSON.stringify(ask_obj);
+        xmlhttp.send(json);
+}
+
+
+function set_comp_index(id_circle,companent_id){  
+    var Node_=d3.select("#"+id_circle);
+    d3.select("#"+id_circle).attr("component_id",companent_id);
+    if(typeof(Node_)!='undefined' && Node_ != null){
+      for(let LinkID of Node_.data()[0].link_list){
+      if(d3.select('#'+linkPrefix+LinkID)){
+        var tmp=d3.select('#'+linkPrefix+LinkID).data()[0];
+        if(typeof(tmp)!='undefined' && tmp != null){
+           var id=tmp.source;
+           if(id==id_circle){id=tmp.target;}
+           if(d3.select("#"+id) && d3.select("#"+id).attr("component_id")!=companent_id){
+              if((d3.select("#"+id).attr("nl_type")=='link')||
+                 (d3.select("#"+id).attr("nl_type")=='llink')||
+                 (d3.select("#"+id).attr("nl_type")=='n_attr')||
+                 ((d3.select("#"+id).attr("nl_type")=='node'))){set_comp_index(id,companent_id);}
+        }}}}
+    }
+}
+
+function  select2array(node_array,node_st,global_key=0){
+          if(global_key==0){
+              companent_id_counter++;
+              set_comp_index(node_st,companent_id_counter);
+           }
+           let show_atr_key=1;  
+           d3.selectAll('circle').each(function(d,i){
+              var Nd=d3.select(this);
+              if(global_key || (Nd.attr("component_id")==companent_id_counter)){
+              switch(Nd.attr("nl_type")){
+                case 'node':
+                  let j1={};
+                      j1.id=Nd.attr("id");
+                         j1.SIUD=Nd.attr("SIUD");
+                       j1.type="node";
+                        j1.item_id=Nd.attr("item_id");
+                        j1.attr_show=Nd.data()[0].attr_show;
+                        j1.ans_cond=Nd.attr("ans_cond");
+                        j1.cx=Nd.attr("cx");
+                        j1.cy=Nd.attr("cy");
+                  node_array.push(j1);
+                  var ttt=' '+Nd.data()[0].attr_show;
+                  if(ttt.match("a")){show_atr_key=0;}
+                  break;
+                case 'n_attr':
+                  let j2={};
+                      j2.id=Nd.attr("id");
+                       j2.type="n_attr";
+                        j2.SIUD=Nd.attr("SIUD");
+                       j2.Id_DB_parent=Nd.attr("link_from");
+                       j2.item_id=Nd.attr("item_id");
+                       j2.n_attr_val=Nd.attr("n_attr_val");
+                       j2.n_attr_valid=Nd.attr("n_attr_valid");
+                      j2.cx=Nd.attr("cx");
+                       j2.cy=Nd.attr("cy");
+                  node_array.push(j2);
+                  break;
+                case 'link':
+                        let j3={};
+                         j3.id=Nd.attr("id");
+                        j3.type="link";
+                        j3.SIUD=Nd.attr("SIUD");
+                        j3.link_from=Nd.attr("link_from");
+                        j3.link_to=Nd.attr("link_to");
+                        j3.item_id=Nd.attr("item_id");
+                        j3.loprt=Nd.attr("loprt");
+                        j3.attr_show=Nd.data()[0].attr_show;
+                        j3.cx=Nd.attr("cx");
+                        j3.cy=Nd.attr("cy");
+                  node_array.push(j3);
+                  
+                  var ttt=' '+Nd.data()[0].attr_show;
+                  if(ttt.match("a")){show_atr_key=0;}
+                  break;
+                case 'llink':
+                        let j4={};
+                         j4.id=Nd.attr("id");
+                        j4.type="llink";
+                        j4.SIUD=Nd.attr("SIUD");
+                        j4.link_from=Nd.attr("link_from");
+                        j4.link_to=Nd.attr("link_to");
+                        j4.item_id=Nd.attr("item_id");
+                        j4.loprt=Nd.attr("loprt");
+                        j4.attr_show=Nd.data()[0].attr_show;
+                        j4.cx=Nd.attr("cx");
+                        j4.cy=Nd.attr("cy");
+                  node_array.push(j4);
+                  var ttt=' '+Nd.data()[0].attr_show;
+                  if(ttt.match("a")){show_atr_key=0;}
+                  break;
+              }}    
+           });
+           return show_atr_key;
+}
+
+var id2name_attr = new Map();
+var name_attr2id = new Map();
+
+function  select_value_list(svg_base,cp_id){
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+           if(xmlhttp.readyState==4 && xmlhttp.status==200){ 
+              id2name_attr.clear();
+              name_attr2id.clear();
+              const j1=JSON.parse(xmlhttp.responseText);
+              if(j1.length<11){
+                var ll=[];
+                for (const el of j1){
+                  id2name_attr.set(el.id,el.val);
+                  name_attr2id.set(el.val,el.id);
+                  var set_t={item_id: 'n1',name: 'C', icon: '*', color: 'blue', clickable: false,call_func: 'set_attr_id_name'};
+                  set_t.item_id=cp_id+el.id; 
+                  set_t.name=el.val; 
+                  ll.push(set_t);
+                } 
+                d3.select("#M"+cp_id).remove();
+                DrawFlower( svg_base, cp_id,ll); 
+              }else{
+                document.getElementById("rec_name").innerHTML=d3.select("#"+cp_id).attr("nl_scpiece");
+                for(const el of j1){
+                  id2name_attr.set(el.id,el.val);
+                  name_attr2id.set(el.val,el.id);
+                }
+                select_attr_cp_id=cp_id;
+              }
+            }
+            if(xmlhttp.readyState==2){ } 
+        }
+        xmlhttp.open("POST","/go/gr_db/select_attr_val",true);
+        let ask_obj={};
+        ask_obj.Attr_id=(d3.select("#"+cp_id)).attr("item_id");
+        ask_obj.Limitation=(d3.select("#"+cp_id)).attr("n_attr_val");
+        let json=JSON.stringify(ask_obj);
+        console.log(json);
+        xmlhttp.send(json);
+}
+
+
+
+
+
+
+//<body  onload="load_ontology()">
+var server_request_flag=1;
+var width = 1800;
+var height =1000;
+var svg_base = d3.select("body")
+   .append("svg")
+   .attr("width", width)
+   .attr("height", height)
+   .append("g");//group everything for zoom
+   
+//zoom activation//
+  let zoom = d3.zoom().on('zoom', handleZoom);
+
+  d3.select('svg')
+		.call(zoom)
+		.on("dblclick.zoom",null);//disable zoom after dblclick 
+  ////////////////////
+  function handleZoom(e) {
+	d3.select('svg g')
+		.attr('transform', e.transform);
+  }
+
+var svg_answer = svg_base;
+var deltaX,deltaY;  // use for smooth drag
+var first_link_node=null;
+var notype_link_available=0;
+var id_counter=4;
+var reaction_type=1;
+
+var NextLinkID=0;
+var linkWidth=3;
+var linkPrefix='link';
+var File_show_flag=0;
+
+let  avaliableTypes_data_type = [
+    {name: 'text', icon:  'T', color: '#8f9', clickable: false,call_func: 'set_attr_dtype'},
+    {name: 'bigint', icon:  'I', color: '#8f9', clickable: false,call_func: 'set_attr_dtype'},
+    {name: 'float', icon:  "R", color: '#ff0', clickable: false,call_func: 'set_attr_dtype'},
+    {name: 'file', icon: 'F', color: '#f0f', clickable: true,call_func: 'set_attr_dtype'},
+    {name: 'datatime', icon: 'DT', color: '#f0f', clickable: true,call_func: 'set_attr_dtype'}
+                                ];
+
+let  avaliableTypes_gnode_cntr = [
+    {name: 'show_all_attr', icon:  'SA', color: '#8f9', clickable: false,call_func: 'ont_cntr'},
+    {name: 'add_attr', icon:  'AA', color: '#8f9', clickable: false,call_func: 'ont_cntr'},
+    {name: 'delete', icon:  "\uf118", color: '#ff0', clickable: false,call_func: 'ont_cntr'},
+    {name: 'rename', icon: 'N', color: '#f0f', clickable: true,call_func: 'ont_cntr'},
+    {name: 'ont_name', icon: 'ON', color: '#f0f', clickable: true,call_func: 'ont_cntr'}
+                                ];
+let  avaliableTypes_gattr_cntr = [
+    {name: 'rename', icon:  'N', color: '#8f9', clickable: false,call_func: 'ont_a_cntr'},
+    {name: 'set_dtype', icon:  'DT', color: '#8f9', clickable: false,call_func: 'ont_a_cntr'},
+    {name: 'delete', icon:  "\uf118", color: '#ff0', clickable: false,call_func: 'ont_a_cntr'},
+    {name: 'set_table', icon: 'T_id', color: '#f0f', clickable: true,call_func: 'ont_a_cntr'},
+    {name: 'ont_name', icon: 'ON', color: '#f0f', clickable: true,call_func: 'ont_a_cntr'}
+                                ];
+let avaliableTypes_anode_cntr = [
+    {name: 'show_attr', icon: '\uf468' , color: 'blue', clickable: false,call_func: 'an_cntr'},
+    {name: 'show_attr_all', icon:  '\uf519', color: '#8f9', clickable: false,call_func: 'an_cntr'},
+    {name: 'delete', icon:  "\uf118", color: '#ff0', clickable: false,call_func: 'an_cntr'},
+    {name: 'delete_comp', icon: '\uf2ed', color: '#f0f', clickable: true,call_func: 'an_cntr'},
+    {name: 'mark', icon: '\uf5aa', color: '#0ff', clickable: true,call_func: 'an_cntr'},
+    {name: 'open', icon: '\uf31e', color: '#f0f', clickable: true,call_func: 'an_cntr'},
+    {name: 'frozen', icon: '\uf31e', color: '#0ff', clickable: true,call_func: 'an_cntr'}
+                                ];
+let avaliableTypes_alink_cntr = [
+    {name: 'delete', icon:  "\uf118", color: 'green', clickable: false,call_func: 'al_cntr'},
+    {name: 'show_attr', icon:  '\uf468', color: 'blue', clickable: false,call_func: 'al_cntr'},
+    {name: 'show_attr_all', icon: '\uf519' , color: 'red', clickable: false,call_func: 'al_cntr'},
+    {name: 'mark', icon: '\uf5aa', color: 'green', clickable: true,call_func: 'al_cntr'}
+                                ];
+
+
+let avaliableTypes_DB_menagment = [
+    {name: 'Create_db', icon: "C", color: 'red', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Delete_db', icon: "D", color: 'green', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Show_ontology', icon: "O", color: 'blue', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Add_Node', icon: "N", color: '#ff0', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Add_Link', icon: "L", color: '#f0f', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Select_db', icon: "S", color: '#0ff', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'Save', icon:  "\uf0c7", color: 'blue', clickable: false,call_func: 'db_mngmnt'},
+    {name: 'todo_db', icon: "T", color: '#08f', clickable: false,call_func: 'db_mngmnt'}
+                                  ];
+
+let avaliableTypes_main = [
+    {name: 'Add_Node', icon: "N", color: 'red', clickable: false,call_func: 'cn_menu'},
+    {name: 'Add_Link', icon: "\uf4d7", color: 'green', clickable: false,call_func: 'cn_menu'},
+    {name: 'Load', icon:  "\uf019", color: 'red', clickable: false,call_func: 'cn_menu'},
+    {name: 'DB_menagment', icon:  "DB", color: '#ff0', clickable: false,call_func: 'cn_menu'},
+    {name: 'Ontology', icon:  "O", color: 'green', clickable: false,call_func: 'cn_menu'},
+    {name: 'Cleare', icon: "\uf118", color: '#0ff', clickable: true,call_func: 'cn_menu'}
+                          ];
+
+let avaliableTypes_node_cntr = [
+    {name: 'ToDo', icon: "do", color: 'green', clickable: false,call_func: 'n_cntr'},
+    {name: 'type', icon: "T", color: 'red', clickable: false,call_func: 'n_cntr'},
+    {name: 'link', icon:  "\uf4d7", color: 'green', clickable: false,call_func: 'n_cntr'},
+    {name: 'set_all_attr', icon:  "SA", color: 'blue', clickable: false,call_func: 'n_cntr'},
+    {name: 'set_attr', icon:  "A", color: 'blue', clickable: false,call_func: 'n_cntr'},
+    {name: 'show_attr', icon:  "S", color: '#8f9', clickable: false,call_func: 'n_cntr'},
+    {name: 'delete', icon:  "\uf118", color: '#ff0', clickable: false,call_func: 'n_cntr'},
+    {name: 'New_Old_Delete', icon: "UI", color: 'green', clickable: true,call_func: 'n_cntr'},
+    {name: 'frozen', icon: '\uf31e', color: '#0ff', clickable: true,call_func: 'an_cntr'}
+    ];
+let avaliableTypes_node_todo_cntr = [  // 'todo'
+    {name: 'insert_csv', icon:  "csv", color: 'blue', clickable: false,call_func: 'n_cntr'},
+    {name: 'insert_json', icon:  "json", color: 'blue', clickable: false,call_func: 'n_cntr'},
+    {name: 'Save', icon:  "\uf0c7", color: 'blue', clickable: false,call_func: 'n_cntr'},
+    {name: 'Search', icon:  "\uf002", color: '#f0f', clickable: false,call_func: 'n_cntr'},
+    {name: 'update', icon: "upd", color: '#f0f', clickable: true,call_func: 'n_cntr'},
+];
+
+let avaliableTypes_add_set_cntr = [   //'New_Old_Delete'
+    {name: 'Hidden', icon: "H", color: 'red', clickable: false,call_func: 'add_set_cntr'},
+    {name: 'delete', icon:  "\uf118", color: 'green', clickable: false,call_func: 'add_set_cntr'},
+    {name: 'insert', icon:  "A", color: 'blue', clickable: false,call_func: 'add_set_cntr'},
+    {name: 'update', icon:  "S", color: '#8f9', clickable: false,call_func: 'add_set_cntr'},
+    {name: 'clear', icon:   "C", color: '#8f9', clickable: false,call_func: 'add_set_cntr'},
+    {name: 'formula', icon: "f", color: '#red', clickable: true,call_func: 'n_cntr'}
+    ];
+    
+let avaliableTypes_link_cntr = [{name: 'type', icon: "T", color: 'red', clickable: false,call_func: 'l_cntr'},
+    {name: 'delete', icon:  "\uf118", color: 'green', clickable: false,call_func: 'l_cntr'},
+    {name: 'set_attr', icon:  "A", color: 'blue', clickable: false,call_func: 'l_cntr'},
+    {name: 'show_attr', icon:  "S", color: '#8f9', clickable: false,call_func: 'l_cntr'},
+    {name: 'from-to', icon:  "FT", color: 'red', clickable: false,call_func: 'l_cntr'},
+    {name: 'to-from', icon: "TF", color: 'green', clickable: true,call_func: 'l_cntr'},
+    {name: 'undirect', icon: "U", color: 'blue', clickable: true,call_func: 'l_cntr'},
+    {name: 'operator', icon: "O", color: '#0ff', clickable: true,call_func: 'l_cntr'},
+    {name: 'New_Old_Delete', icon: "UI", color: 'green', clickable: true,call_func: 'l_cntr'}
+    ];
+let  avaliableTypes_llink_cntr = [
+    {name: 'delete', icon:  "\uf118", color: 'green', clickable: false,call_func: 'linklink_cntr'}
+    ]; 
+let avaliableTypes_link_node_operator = [
+    {name: 'Exists', icon: "E", color: 'red', clickable: false,call_func: 'l_oprt'},
+    {name: 'All', icon:  "A", color: 'green', clickable: false,call_func: 'l_oprt'},
+    {name: 'Never', icon:  "N", color: 'blue', clickable: false,call_func: 'l_oprt'},
+    {name: '<N', icon:  "\uf536", color: 'red', clickable: false,call_func: 'l_oprt'},
+    {name: '>N', icon: "\uf531", color: 'green', clickable: true,call_func: 'l_oprt'},
+    {name: '<=N', icon: "\uf537", color: 'blue', clickable: true,call_func: 'l_oprt'},
+    {name: '>=N', icon: "\uf532", color: 'red', clickable: true,call_func: 'l_oprt'},
+    {name: '==N', icon: "\uf52c", color: 'green', clickable: true,call_func: 'l_oprt'},
+    {name: 'clear', icon: "\uf118", color: 'blue', clickable: true,call_func: 'l_oprt'}
+    ];
+    
+let avaliableTypes_link_attr_str_optr = [
+    {name: '~M', icon: '~', color: 'red', clickable: false,call_func: 'la_oprt'},
+    {name: '~M^', icon: '~^', color: 'green', clickable: false,call_func: 'la_oprt'},
+    {name: '~M$', icon:  '~$', color: 'blue', clickable: false,call_func: 'la_oprt'},
+    {name: 'clear', icon: "\uf118", color: 'blue', clickable: true,call_func: 'l_oprt'}
+    ];
+    
+let avaliableTypes_link_attr_int_optr = [
+    {name: '!=', icon: "\uf53e", color: 'red', clickable: false,call_func: 'la_oprt'},
+    {name: '==', icon:  "\uf52c", color: 'green', clickable: false,call_func: 'la_oprt'},
+    {name: '<', icon:  "\uf536", color: 'blue', clickable: false,call_func: 'la_oprt'},
+    {name: '<=', icon: "\uf537" , color: 'red', clickable: false,call_func: 'la_oprt'},
+    {name: '>=', icon: "\uf532", color: 'green', clickable: true,call_func: 'la_oprt'},
+    {name: '>', icon: "\uf531", color: 'blue', clickable: true,call_func: 'la_oprt'},
+    {name: 'clear', icon: "\uf118", color: 'blue', clickable: true,call_func: 'la_oprt'},
+    {name: 'arg_N', icon: "\uf118", color: 'green', clickable: true,call_func: 'la_oprt'}
+    ];
+let avaliableTypes_link_attr_real_optr = [
+    {name: '!=', icon: "\uf53e", color: 'red', clickable: false,call_func: 'la_oprt'},
+    {name: '<', icon:  "\uf536", color: 'blue', clickable: false,call_func: 'la_oprt'},
+    {name: '<=', icon: "\uf537", color: 'red', clickable: false,call_func: 'la_oprt'},
+    {name: '>=', icon: "\uf532", color: 'green', clickable: true,call_func: 'la_oprt'},
+    {name: '>', icon: "\uf531", color: 'blue', clickable: true,call_func: 'la_oprt'},
+    {name: 'clear', icon: "\uf118", color: 'blue', clickable: true,call_func: 'la_oprt'},
+    {name: 'arg_N', icon: "\uf118", color: 'green', clickable: true,call_func: 'la_oprt'}
+    ];
+
+let avaliableTypes_attr_cntr = [
+        {name: 'match', icon: "~", color: 'green', clickable: false,call_func: 'attr_cntr'},
+        {name: 'set', icon: "=", color: 'red', clickable: false,call_func: 'attr_cntr'},
+        {name: 'delete', icon:  "\uf118", color: 'blue', clickable: false,call_func: 'attr_cntr'},
+        {name: 'link', icon: "\uf4d7", color: '#0ff', clickable: true,call_func: 'attr_cntr'},
+        {name: 'New_Old_Delete', icon: "UI", color: 'green', clickable: true,call_func: 'attr_cntr'},
+        {name: 'operator', icon: "\uf621", color: 'red', clickable: true,call_func: 'attr_cntr'},
+        {name: 'formula', icon: "f", color: '#red', clickable: true,call_func: 'attr_cntr'}
+        ];
+let avaliableTypes_attr_file_cntr = [
+        {name: 'load', icon: "L", color: 'green', clickable: false,call_func: 'attr_file_cntr'},
+        {name: 'update', icon: "U", color: 'red', clickable: false,call_func: 'attr_file_cntr'},
+        {name: 'show', icon:  "S", color: 'blue', clickable: false,call_func: 'attr_file_cntr'},
+        {name: 'delete', icon:  "\uf118", color: 'blue', clickable: false,call_func: 'attr_file_cntr'}
+        ];
+        
+let avaliableTypes_link_attr_cntr = [
+        {item_id: 'ts',name: 'the_same', icon: "Eq", color: 'red', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: 'd',name: 'delete', icon:  "\uf118", color: 'blue', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: '==',name: '==', icon: "=", color: 'red', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: '!=',name: '!=', icon: "\uf53e", color: 'red', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: '<',name: '<', icon:  "\uf536", color: 'blue', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: '<=',name: '<=', icon: "\uf537", color: 'red', clickable: false,call_func: 'link_attr_cntr'},
+        {item_id: '>=',name: '>=', icon: "\uf532", color: 'green', clickable: true,call_func: 'link_attr_cntr'},
+        {item_id: '>',name: '>', icon: "\uf531", color: 'blue', clickable: true,call_func: 'link_attr_cntr'},
+        {item_id: 'dT',name: 'dT', icon: "\uf621", color: 'green', clickable: true,call_func: 'link_attr_cntr'}
+        ];
+        
+
+
+
+DrawCircle(svg_base, "Circlepoint1",'g_menu', avaliableTypes_main, 90, 90, 70, 20);
+ 
+ 
+ function change_menu( cp_id,func_name,fl_name,item_id){
+   if(cp_id != "Circlepoint1"){
+       d3.select("#M"+cp_id).remove();
+       d3.select("#"+cp_id).attr("flower_on",0);
+            }
+   switch(func_name){ 
+    case 'add_set_cntr':
+    switch(fl_name){
+    case 'clear':    
+               const cfill=d3.select("#"+cp_id).attr('fill');
+               d3.select("#"+cp_id).attr('SIUD',0);
+               d3.select("#"+cp_id).attr('stroke', cfill);
+               break;      
+    case 'delete':
+              d3.select("#"+cp_id).attr('SIUD',3);
+              d3.select("#"+cp_id).attr('stroke', "black");
+              break;
+    case 'update':
+              d3.select("#"+cp_id).attr('SIUD',2);
+               d3.select("#"+cp_id).attr('stroke', "red");
+               break;
+    case 'insert':
+               d3.select("#"+cp_id).attr('SIUD',1);
+               d3.select("#"+cp_id).attr('stroke', "green");
+            break;
+    case 'Hidden':        break;
+    }break;
+     case 'db_mngmnt':
+       switch(fl_name){
+       case 'Create_db':
+            Create_db();break;
+       case 'Delete_db':
+       case 'Select_db':break;
+       case 'Show_ontology':
+            show_ontology();break;
+       case 'Add_Node':
+           reaction_type=1;
+           var tt="Circlepoint"+(++id_counter);
+           DrawCircle(svg_base, tt,'gnode' ,avaliableTypes_gnode_cntr,200,200);
+           d3.select("#"+tt).attr("item_id",active_DB_name+"::xxx")
+            d3.select("#"+tt).attr("ontology_new",1).attr("ontology_deleted",0);
+           break;
+       case 'Add_Link':
+           if(reaction_type==1){                                  
+             reaction_type=2;
+             d3.select("#F"+cp_id+"_Add_Link").attr("stroke", "black" ).attr("stroke-width", "3px");
+           }else{
+             d3.select("#F"+cp_id+"_Add_Link").attr("stroke", "grey" ).attr("stroke-width", "1px");
+             reaction_type=1;
+           }
+           break;
+       case 'todo_db':   
+           clear_all();
+           d3.select("#M"+cp_id).remove();
+           DrawFlower( svg_base, cp_id,avaliableTypes_main); 
+           break;
+        case 'Save':
+          if(confirm("save_all changes?")){save_ontology_front();}break;
+       default: 
+          alert("function name:"+func_name+"unknown  name:"+fl_name);
+          break;       
+       }
+       break;
+     case 'cn_menu':
+       switch(fl_name){
+         case 'Add_Node':
+           DrawCircle(svg_base, "Circlepoint"+(++id_counter),'node' ,avaliableTypes_node_cntr,200,200);
+           break;
+         case 'Add_Link':
+           if(reaction_type==1){
+//             d3.select("#F"+cp_id+"_Add_Link").attr("stroke", "black" ).attr("stroke-width", "3px");
+             d3.select("#FCirclepoint1_Add_Link").attr("stroke", "black" ).attr("stroke-width", "3px");
+             reaction_type=2;
+           }else{
+             reaction_type=1;
+             d3.select("#FCirclepoint1_Add_Link").attr("stroke", "grey" ).attr("stroke-width", "1px");
+//             d3.select("#F"+cp_id+"_Add_Link").attr("stroke", "grey" ).attr("stroke-width", "1px");
+           }
+           break;
+         case 'Load':
+           load_select_grph();
+           break; 
+         case 'DB_menagment': 
+           d3.select("#M"+cp_id).remove();
+           DrawFlower( svg_base, cp_id,avaliableTypes_DB_menagment); 
+           break; 
+         case 'Cleare':
+          if(confirm("delete_all object?")){
+           d3.selectAll('circle').each(function(d,i){//console.log(this)
+              var Nd=d3.select(this);
+              switch(Nd.attr("nl_type")){
+                case 'g_menu': 
+                  break;
+                default:
+                  var idt='t'+Nd.attr('id');
+                  d3.select("#"+idt).remove();
+                  Nd.remove();
+                  break; 
+              }    
+           });
+           d3.selectAll('.link').each(function(d,i){d3.select(this).remove();});
+           d3.selectAll('.menu_item').each(function(d,i){d3.select(this).remove();});
+           id_counter=4;
+          
+           NextLinkID=0;
+          }
+          break; 
+         case 'Ontology':  break;
+         default: 
+          alert("function name:"+func_name+"unknown  name:"+fl_name);
+          break;       
+       }
+       break;
+     case 'ont_cntr':
+       switch(fl_name){
+         case 'show_all_attr': show_all_attr_gnode(svg_base, cp_id);break;
+         case 'add_attr':      add_attr_gnode(svg_base, cp_id);break;
+         case 'delete':        delete_gnode(svg_base, cp_id);break;
+         case 'rename':        rename_gnode(svg_base, cp_id);break;
+         case 'ont_name':      ont_name_gnode(svg_base, cp_id);break;
+         default:              alert("function name:"+func_name+"unknown  name:"+fl_name);break;       
+       }  
+     break;
+     case 'ont_a_cntr': 
+        switch(fl_name){  
+        case 'rename':    rename_gnode(svg_base, cp_id);break;
+        case 'set_dtype': DrawFlower( svg_base, cp_id,avaliableTypes_data_type);break;
+        case 'delete':    delete_gnode(svg_base, cp_id);break;
+        case 'set_table': break;
+        case 'ont_name':  ont_name_gnode(svg_base, cp_id);break;
+        default:          alert("function name:"+func_name+"unknown  name:"+fl_name);break;
+        }
+     break;
+     case 'set_attr_dtype': set_attr_data_type(svg_base, cp_id,fl_name);break;
+     case 'n_cntr':
+       switch(fl_name){     
+         case 'type':
+            DrawFlower( svg_base, cp_id,active_node_menu);
+            break;
+         case 'New_Old_Delete':
+         DrawFlower( svg_base, cp_id,avaliableTypes_add_set_cntr);
+            break;
+         case 'ToDo':
+         DrawFlower( svg_base, cp_id,avaliableTypes_node_todo_cntr);
+            break;
+         case 'link':
+            first_link_node=cp_id;
+            reaction_type=2;
+             d3.select("#FCirclepoint1_Add_Link").attr("stroke", "black" ).attr("stroke-width", "3px");
+            break;
+         case 'set_attr':
+            DrawFlower( svg_base, cp_id,TM_nodelink_attr_menu.get(d3.select("#"+cp_id).attr("item_id")));
+            break;
+         case 'formula':
+                     const formula_id="Circlepoint"+(++id_counter);
+                     Draw_attr(svg_base,cp_id,formula_id,'','',
+                        parseInt(d3.select("#"+cp_id).attr("cx"),10)+25,
+                        parseInt(d3.select("#"+cp_id).attr("cy"),10)+15);
+//                    d3.select("#"+formula_id).attr("stroke","white")         
+                    d3.select("#"+formula_id).attr("fill","white")         
+                    d3.select("#"+formula_id).attr("item_id","formula");
+                    d3.select("#"+formula_id).attr("item_id","formula");
+                    d3.select("#"+formula_id).attr("nl_scpiece","formula");
+                    d3.select("#"+formula_id).attr("n_attr_val","");
+                    d3.select("#t"+formula_id).text("formula:");
+                    alert("qqq");
+                    alert(d3.select("#"+formula_id).data()[0].link_list[0]);
+                    const lid=d3.select("#"+formula_id).data()[0].link_list[0];
+                    d3.select("#"+linkPrefix+lid).attr("stroke-dasharray","2 4");
+                    alert("qqq1");
+            break;
+         case 'show_attr':
+            DrawFlower( svg_base, cp_id,TM_nodelink_attr_show_menu.get(d3.select("#"+cp_id).attr("item_id")),1);
+            break;
+         case 'set_all_attr':
+             show_all_attr_gnode(svg_base, cp_id,0);
+            break;
+         case 'delete':
+            delete_nla(cp_id);
+            break;
+         case 'ans_cond':
+            if(d3.select("#"+cp_id).attr('ans_cond')==1){
+               d3.select("#"+cp_id).attr("ans_cond",0);
+               d3.select("#"+cp_id).attr('stroke', 'red');
+            }else{
+               d3.select("#"+cp_id).attr("ans_cond",1);
+               d3.select("#"+cp_id).attr('stroke', 'black');
+            }
+            break;
+         case 'Save':
+            save_select_component(1,cp_id);
+           break;
+          case 'insert_csv': save_select_component(2,cp_id);
+           break;
+          case 'insert_json': save_select_component(4,cp_id);
+           break;
+         case 'Search': save_select_component(0,cp_id);
+           break; 
+             case 'frozen':
+            if(!frozen_cl_id.has(d3.select("#"+cp_id).attr("claster_id"))){
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),1);
+               break;
+            }
+            if(frozen_cl_id.get(d3.select("#"+cp_id).attr("claster_id"))==1){ 
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),-1);
+            }else{
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),1);
+            } 
+            break;
+         case 'update':save_select_component(3,cp_id);
+            break;
+         default:
+            alert("function name:"+func_name+"unknown  name:"+fl_name);
+            break;       
+       }
+
+       break;
+     case 'l_cntr':
+      switch(fl_name){     
+         case 'type':
+            DrawFlower( svg_base, cp_id,active_link_menu.get(
+                           d3.select("#"+d3.select("#"+cp_id).attr("link_from")).attr("item_id")+'_'+
+                           d3.select("#"+d3.select("#"+cp_id).attr("link_to")).attr("item_id")));
+            break;       
+         case 'New_Old_Delete':
+            DrawFlower( svg_base, cp_id,avaliableTypes_add_set_cntr);
+            break;
+         case 'delete':
+            delete_nla(cp_id);
+            break;       
+         case 'set_attr':
+                        DrawFlower( svg_base, cp_id,TM_nodelink_attr_menu.get(d3.select("#"+cp_id).attr("item_id")));
+            break;
+        case 'show_attr':
+            DrawFlower( svg_base, cp_id,TM_nodelink_attr_show_menu.get(d3.select("#"+cp_id).attr("item_id")),1);
+            break;
+        case 'from-to':
+            break;       
+         case 'to-from':
+            break;       
+         case 'undirect':
+            break;       
+         case 'operator':
+            DrawFlower( svg_base, cp_id,avaliableTypes_link_node_operator);
+            break;       
+         default:
+            alert("function name:"+func_name+"unknown  name:"+fl_name);
+            break;       
+       }
+       break;
+   case  'linklink_cntr':
+      switch(fl_name){ 
+        case 'delete': 
+           alert(d3.select("#"+cp_id).attr("item_id"));
+           delete_nla(cp_id);break;
+         default:
+            alert("function name:"+func_name+"unknown  name:"+fl_name);
+            break;       
+       }
+       break;
+     case  'link_attr_cntr':
+      switch(fl_name){     
+        case 'delete': 
+           alert(d3.select("#"+cp_id).attr("item_id"));
+           delete_nla(cp_id);break;
+        case 'the_same':
+        case '==':
+        case '!=':
+        case '<':
+        case '<=':
+        case '>=':
+        case '>':
+                 d3.select("#"+cp_id).attr("nl_scpiece",fl_name);
+                 d3.select("#"+cp_id).attr("item_id",item_id);
+                 d3.select("#t"+cp_id).text(item_id); 
+                 break;
+        case 'dT': 
+                 let delta=prompt("input delta ",'1'); 
+                 d3.select("#"+cp_id).attr("nl_scpiece",fl_name);
+                 d3.select("#"+cp_id).attr("item_id",item_id);
+                 d3.select("#"+cp_id).attr("loprt",delta);
+                 d3.select("#t"+cp_id).text(item_id+":"+delta); 
+                 break;
+         default:
+                 alert("function name:"+func_name+"unknown  name:"+fl_name);
+                 break;       
+       }
+       break;
+     case 'la_oprt': case 'l_oprt': 
+       var tmp=d3.select("#"+cp_id).attr("nl_scpiece");
+       switch(fl_name){
+          case '~M': case '~M^': case '~M$': case '!=': case '==': case '<': case '<=': case '>=': case '>':
+          case 'Exists': case 'All': case 'Never': case '<N': case '>N': case '<=N': case '>=N':
+           d3.select("#"+cp_id).attr("loprt",fl_name);
+           d3.select("#t"+cp_id).text(fl_name+"_"+tmp);
+           break;
+          case 'clear':
+           d3.select("#"+cp_id).attr("loprt",'');
+           d3.select("#t"+cp_id).text(tmp); 
+           break;
+          case  'arg_N':
+                 let delta=prompt("input arg x",'1'); 
+                 d3.select("#"+cp_id).attr("loprt",fl_name);
+                 d3.select("#t"+cp_id).text(fl_name+"_"+tmp);
+             
+                 break;
+          default:
+            alert("function name:"+func_name+"unknown  name:"+fl_name);
+            break;       
+       }   
+       break;
+     case 'set_link_type':
+            var tn1=d3.select("#"+d3.select("#"+cp_id).attr("link_from")).attr("item_id");
+            var tn2=d3.select("#"+d3.select("#"+cp_id).attr("link_to")).attr("item_id");
+            if(TM_link_direction.get(tn1+'_'+tn2+'_'+item_id)==-1){
+               var firstln= d3.select("#"+cp_id).attr("link_from");              
+               var secondln= d3.select("#"+cp_id).attr("link_to");              
+                d3.select("#"+cp_id).attr("link_from",secondln);
+                d3.select("#"+cp_id).attr("link_to",firstln);
+//                alert("#"+linkPrefix+d3.select("#"+cp_id).data()[0].link_list[0]);
+                d3.select("#"+linkPrefix+d3.select("#"+cp_id).data()[0].link_list[0]).attr("stroke", "red");
+                d3.select("#"+linkPrefix+d3.select("#"+cp_id).data()[0].link_list[1]).attr("stroke", "blue")
+            }
+       d3.select("#"+cp_id).attr("nl_scpiece",fl_name);
+       d3.select("#"+cp_id).attr("item_id",item_id);
+       d3.select("#t"+cp_id).text(fl_name); 
+       break;
+     case 'set_node_type':
+       d3.select("#"+cp_id).attr("nl_scpiece",fl_name);
+       d3.select("#"+cp_id).attr("item_id",item_id);
+       d3.select("#t"+cp_id).text(fl_name); 
+       break;
+     case 'set_node_attr':
+         Draw_attr(svg_base,cp_id,"Circlepoint"+(++id_counter),item_id,'',
+                        parseInt(d3.select("#"+cp_id).attr("cx"),10)+25,
+                        parseInt(d3.select("#"+cp_id).attr("cy"),10)+15);         
+       break;
+    case  'set_attr_id_name':
+          alert(fl_name+"|"+name_attr2id.get(fl_name));
+          var nnn=d3.select("#"+cp_id).attr("nl_scpiece");
+          var vvv=d3.select("#"+cp_id).attr("n_attr_val");
+          d3.select("#"+cp_id).attr("n_attr_valid",name_attr2id.get(fl_name));
+          d3.select("#t"+cp_id).text(nnn+":"+vvv+":"+fl_name);
+          
+          
+          
+         break;
+     case  'attr_file_cntr':
+     switch(fl_name){
+       case 'load':
+             upload_file(d3.select("#"+cp_id).attr("item_id"),cp_id);
+             break;
+       case 'delete': if(d3.select("#"+cp_id).attr("item_id").match('link_obj')){
+             const v=d3.select("#"+cp_id).attr("n_attr_val");
+             N_lst_save_arg.forEach(function f(val,key){
+               if(val==v){
+                 N_lst_save_link.set(key,"Link");
+                 document.getElementById('l_'+key).innerHTML="Link";
+               }
+             })
+           }
+           delete_nla(cp_id); break;
+       case 'update': 
+       case 'show':   
+       default:     alert("function attr_file_cntr unknown :"+fl_name);   break;
+          }
+          break;
+     case 'attr_cntr':
+      switch(fl_name){
+        case 'New_Old_Delete':
+        DrawFlower( svg_base, cp_id,avaliableTypes_add_set_cntr);
+            break;
+         case 'formula':
+                     const formula_id="Circlepoint"+(++id_counter);
+                     Draw_attr(svg_base,cp_id,formula_id,'','',
+                        parseInt(d3.select("#"+cp_id).attr("cx"),10)+25,
+                        parseInt(d3.select("#"+cp_id).attr("cy"),10)+15);         
+                    d3.select("#"+formula_id).attr("item_id","var");
+                    d3.select("#"+formula_id).attr("nl_scpiece","var");
+                    d3.select("#"+formula_id).attr("n_attr_val","");
+                    d3.select("#t"+formula_id).text("var:");
+            break;
+
+        case 'match':
+          var nnn=d3.select("#"+cp_id).attr("nl_scpiece");
+          var vvv=d3.select("#"+cp_id).attr("n_attr_val");
+          var val=prompt("input value for "+nnn,vvv);
+          d3.select("#"+cp_id).attr("n_attr_val",val);
+          d3.select("#"+cp_id).attr("n_attr_valid","");   
+          d3.select("#t"+cp_id).text(nnn+":"+val);
+        break;
+        case 'set':
+          select_value_list(svg_base,cp_id);
+        break;
+        case 'delete':
+           if(d3.select("#"+cp_id).attr("item_id").match('link_obj')){
+             const v=d3.select("#"+cp_id).attr("n_attr_val");
+             N_lst_save_arg.forEach(function f(val,key){
+               if(val==v){
+                 N_lst_save_link.set(key,"Link");
+                 document.getElementById('l_'+key).innerHTML="Link";
+               }
+             })
+           }
+           delete_nla(cp_id);break;
+        case 'link': set_attr_link_first(cp_id);break;
+      case 'operator':
+        var ttt=TM_attr_vtype.get(d3.select("#"+cp_id).attr("item_id"));
+        switch(ttt){
+          case 'text':
+            DrawFlower( svg_base, cp_id,avaliableTypes_link_attr_str_optr); break;
+          case 'bigint':
+            DrawFlower( svg_base, cp_id,avaliableTypes_link_attr_int_optr);break;
+          case 'float':
+            DrawFlower( svg_base, cp_id,avaliableTypes_link_attr_real_optr);break;
+          default:
+            alert("type |" + ttt+ "| undeffine");
+        }
+      break;
+        default:     alert("function attr_cntr unknown :"+fl_name);   break;
+      } break;
+    case 'an_cntr':
+      switch(fl_name){
+      case 'show_attr':
+        var ttt11=create_avaliableTypes_show(cp_id);
+        reaction_on_menu_close.set(cp_id,1);
+        DrawFlower( svg_answer, cp_id,ttt11,1);
+        break;
+      case 'show_attr_all':
+        var ttt111=create_avaliableTypes_show(cp_id);
+        reaction_on_menu_close.set(cp_id,2);
+        DrawFlower( svg_answer, cp_id,ttt111,1);
+      break;
+      case 'delete': 
+        delete_nla(cp_id);
+       break;
+      case 'delete_comp':
+        delete_nla(cp_id,1);
+      break;
+      case 'mark': DrawFlower( svg_answer, cp_id,avaliableTypes_mark);break;
+      case 'frozen':
+            if(!frozen_cl_id.has(d3.select("#"+cp_id).attr("claster_id"))){
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),1);
+               break;
+            }
+            if(frozen_cl_id.get(d3.select("#"+cp_id).attr("claster_id"))==1){ 
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),-1);
+            }else{
+               frozen_cl_id.set(d3.select("#"+cp_id).attr("claster_id"),1);
+            } 
+            break;
+      case 'open':
+                  var id_new="Circlepoint"+(++id_counter);
+                  DrawCircle(svg_base, id_new,'node' ,avaliableTypes_node_cntr,
+                      200+10*id_counter,200+10*id_counter);
+                      const ttt=d3.select("#"+cp_id).attr("item_id").split('::');
+//                  d3.select("#"+id_new).attr("claster_id")=d3.select("#"+cp_id).attr("claster_id");
+       alert("|"+d3.select("#"+cp_id).attr("nl_scpiece")+"|"+d3.select("#"+cp_id).attr("item_id")+"|");
+             d3.select("#"+id_new).attr("nl_scpiece",d3.select("#"+cp_id).attr("nl_scpiece"));
+       d3.select("#"+id_new).attr("item_id",d3.select("#"+cp_id).attr("item_id"));
+       d3.select("#t"+id_new).text(d3.select("#"+cp_id).attr("nl_scpiece"));
+       var id_att="Circlepoint"+(++id_counter);
+       var t_attr_id=ttt+'::0';
+         Draw_attr(svg_base,id_new,id_att,t_attr_id,'',
+                        parseInt(d3.select("#"+id_new).attr("cx"),10)+25,
+                        parseInt(d3.select("#"+id_new).attr("cy"),10)+15);         
+          var nnn=d3.select("#"+id_att).attr("nl_scpiece");
+          var vvv=d3.select("#"+cp_id).attr("node_id");
+          d3.select("#"+id_att).attr("n_attr_val",vvv);
+          d3.select("#t"+id_att).text(nnn+":"+vvv);
+
+      break;
+      default:     alert("function an_cntr unknown :"+fl_name);   break;
+      }
+      break;
+    case 'al_cntr':
+      switch(fl_name){
+      case 'delete':
+        delete_nla(cp_id);
+      break;
+      case 'show_attr':break;
+      case 'show_attr_all':break;
+      case 'mark':break;
+      default:     alert("function al_cntr unknown :"+fl_name);   break;
+      }
+      break;
+      
+      
+     default: alert("unknown function name:"+func_name); break;
+     }
+   
+   }
+
+ 
+ 
+ 
+ 
+ 
+
+function DrawCircle(svg, cp_id, type_cyrcl,avaliableTypes,
+                     x0 = 200, y0 = 100,
+                     arcOuterRadius = 58, arcInnerRadius = 15 
+                   )
+{
+      var color_c='';
+      var color_t='';
+      var text_c='';
+      var rrr=arcInnerRadius;
+      switch(type_cyrcl){
+        case 'g_menu': color_c='green';      color_t='black';   text_c='M'; break;
+        case 'gnode':  color_c='#f900f2';    color_t='black'; text_c='GN';break;
+        case 'glink':  color_c='#b9c3e2';    color_t='black'; text_c='GL';break;
+        case 'g_attr': color_c='lightgreen'; color_t='black';   text_c='GA'; break;
+        case 'node':   color_c='#69a3b2';    color_t='black'; text_c='N'; break;
+        case 'link':   color_c='#f0f';       color_t='black'; text_c='L'; break;
+        case 'llink':   color_c='#f0a';      color_t='black'; text_c='L'; break;
+        case 'anode':  color_c='#69a3b2';    color_t='black'; text_c='N'; break;
+        case 'alink':  color_c='#f0f';       color_t='black'; text_c='L'; break;
+        case 'n_attr': color_c='lightgreen'; color_t='black';   text_c='A'; break;
+      }
+
+
+var center1=svg.append('circle')
+         .data([{x:x0,y:y0,link_list:[],attr_show:[]}])
+         .attr("id",cp_id)
+         .attr('cx', function(d){ return d.x;})
+         .attr('cy', function(d){ return d.y;})
+         .attr('r', rrr)
+         .attr('SIUD',0)
+         .attr("ans_cond",1)
+         .attr('stroke', color_c)
+         .attr('stroke-width', 3)
+         .attr('fill', color_c)
+         .attr("nl_type",type_cyrcl)
+         .attr("nl_scpiece","none")
+         .attr("link_cntr","none")
+         .attr("link_direction","none")
+         .attr("link_from",-1)
+         .attr("link_to",-1)
+         .attr("n_attr_val",'')                
+         .attr('flower_on',0)
+         .on("click", function(event_){
+                               var cp_id=d3.select(this).attr("id");
+                                if((cp_id=="Circlepoint1") || (reaction_type==1)){
+                                       if(d3.select(this).attr("flower_on")==0){
+                                        d3.select(this).attr("flower_on",1);
+                                        DrawFlower( svg,cp_id, avaliableTypes);
+                                        }else{
+                                        d3.select("#M"+cp_id).remove();
+                                        d3.select(this).attr("flower_on",0);
+                                         if(reaction_on_menu_close.has(cp_id) &&reaction_on_menu_close.get(cp_id)>0){
+                                            menu_close_funk(cp_id);
+                                         }
+                                        }
+                                 }else{
+              /*   if(d3.select(this).attr("nl_type")=='link' || d3.select(this).attr("nl_type")=='glink'){
+                              reaction_type=1;
+                              d3.select("#FCirclepoint1_Add_Link").attr("stroke", "grey" ).attr("stroke-width", "1px");
+                                         d3.select(this).attr("flower_on",1);
+                                        DrawFlower( svg,cp_id, avaliableTypes);                
+                                 }else
+          */                       
+                                 {
+            if(first_link_node==null){ first_link_node=event_.originalTarget.id;}
+            else{
+              drag_line.style("opacity", 0);
+      //        if(first_link_node==event_.originalTarget.id){first_link_node=null; return ;}//no loop link                    
+              var second_link_node=event_.originalTarget.id;
+              var key=0;var tn1;var tn2;
+              if((d3.select("#"+first_link_node).attr("nl_type")=='node') &&
+                 (d3.select("#"+second_link_node).attr("nl_type")=='node')){
+                 tn1=d3.select("#"+first_link_node).attr("item_id");
+                 tn2=d3.select("#"+second_link_node).attr("item_id");
+                 if(active_link_menu.has(tn1+'_'+tn2) ){key=1;}else{
+                  if(active_link_menu.has(tn2+'_'+tn1)){key=1;
+                   let a=second_link_node;second_link_node=first_link_node;first_link_node=a;
+                   tn1=d3.select("#"+first_link_node).attr("item_id");
+                   tn2=d3.select("#"+second_link_node).attr("item_id");
+                 }}
+                 
+              }else{
+               if((d3.select("#"+first_link_node).attr("nl_type")=='n_attr') &&
+                  (d3.select("#"+second_link_node).attr("nl_type")=='n_attr')){
+                 tn1=d3.select("#"+first_link_node).attr("item_id");
+                 tn2=d3.select("#"+second_link_node).attr("item_id");
+                 if(tn1==tn2){key=2;}
+                 }else{
+                  if((d3.select("#"+first_link_node).attr("nl_type")=='node') &&
+                     (d3.select("#"+second_link_node).attr("nl_type")=='n_attr')){
+                      tn1=d3.select("#"+first_link_node).attr("item_id");
+                      tn2=d3.select("#"+second_link_node).attr("item_id");
+                      if(1){key=3;}
+                   }else{
+                     if((d3.select("#"+first_link_node).attr("nl_type")=='n_attr') &&
+                        (d3.select("#"+second_link_node).attr("nl_type")=='node')){
+                         var ttt=first_link_node;first_link_node=second_link_node;second_link_node=ttt;
+                         tn1=d3.select("#"+first_link_node).attr("item_id");
+                         tn2=d3.select("#"+second_link_node).attr("item_id");
+                         if(1){key=3;}
+                   }
+                 }
+              }}
+              if(d3.select("#"+first_link_node).attr("nl_type") =='gnode' || 
+                 d3.select("#"+second_link_node).attr("nl_type")=='gnode' ){key=10;}
+              if(d3.select("#"+second_link_node).attr("nl_type")=='g_attr'||
+                 d3.select("#"+first_link_node).attr("nl_type") =='g_attr'){key=12;}
+               if(notype_link_available==1 && key==0){key=20}
+              if(d3.select("#"+first_link_node).attr("nl_type") =='link' || 
+                 d3.select("#"+second_link_node).attr("nl_type")=='link' ){key=30;}
+               
+               if(key>0){
+                  id_counter++;
+                  var xx=(parseInt(d3.select("#"+first_link_node).attr("cx"),10)+
+                          parseInt(d3.select("#"+second_link_node).attr("cx"),10))/2;
+                  var yy=(parseInt(d3.select("#"+first_link_node).attr("cy"),10)+
+                          parseInt(d3.select("#"+second_link_node).attr("cy"),10))/2;
+                  var cp_id="Circlepoint"+id_counter;        
+                  switch(key){
+                  case 1:
+                   Draw_link(svg_base,first_link_node,cp_id,second_link_node,'link','','',xx,yy,avaliableTypes_link_cntr);        
+                   break;
+                  case 10: case 12:
+                   Draw_link(svg_base,first_link_node,cp_id,second_link_node,'glink','','',xx,yy,avaliableTypes_gnode_cntr);
+                                 d3.select("#"+cp_id).attr("ontology_new",1).attr("ontology_deleted",0);
+                                 d3.select("#"+cp_id).attr("item_id",active_DB_name+"::xxx")
+
+                   break;
+                   case 30:
+                   Draw_link(svg_base,first_link_node,cp_id,second_link_node,'llink','','',xx,yy,avaliableTypes_llink_cntr);
+                   break;
+                  default:
+                Draw_link(svg_base,first_link_node,cp_id,second_link_node,'link','','',xx,yy,avaliableTypes_link_attr_cntr);        
+                  }
+                  first_link_node=null;
+                 }else{ alert("no link type for:"+tn1+'_'+tn2);}
+                }
+              }}}       
+            )
+         .call(d3.drag() // call specific function when circle is dragged
+             .on("start",function(){  
+                                    deltaX=d3.select(this).attr("cx")-event.x;
+                                    deltaY=d3.select(this).attr("cy")-event.y;
+                                   })
+             .on("drag", function(){ 
+                               var xx=event.x+deltaX;
+                               var yy=event.y+deltaY;
+                      if(frozen_cl_id.has(d3.select(this).attr("claster_id")) &&
+                         frozen_cl_id.get(d3.select(this).attr("claster_id"))==1){
+                               let claster_id=d3.select(this).attr("claster_id");
+                               var mp_id=d3.select(this).attr("id");
+                               d3.selectAll('circle').each(function(d,i){
+                                if(d3.select(this).attr("claster_id")==claster_id && mp_id!=d3.select(this).attr("id")){
+                                     var c_id=d3.select(this).attr("id");
+                                     var xxi=xx+parseInt(d3.select("#"+c_id).attr("cx"),10)-parseInt(d3.select("#"+mp_id).attr("cx"),10);
+                                     var yyi=yy+parseInt(d3.select("#"+c_id).attr("cy"),10)-parseInt(d3.select("#"+mp_id).attr("cy"),10);
+                                     if((xxi>0) && (xxi<width) && (yyi>0) && (yyi<height)){
+                                             d3.select("#t"+c_id).attr("x",xxi).attr("y",yyi);
+                                             if(d3.select("#"+c_id).attr('flower_on')==1){
+                                                d3.select("#M"+c_id).attr("transform","translate("+xxi+","+yyi+")")};
+                                             d3.select("#"+c_id).attr("cx",xxi).attr("cy",yyi);
+                                        for(let LinkID of d3.select("#"+c_id).data()[0].link_list)
+                                          { let Link_=d3.select('#'+linkPrefix+LinkID);
+                                            if(Link_.data()[0]){
+                                            if(d3.select("#"+Link_.data()[0].source).attr('id')==c_id)
+                                              { Link_.attr('x1', xxi);
+                                                Link_.attr('y1', yyi);
+                                              }
+                                              else{ Link_.attr('x2', xxi);
+                                                    Link_.attr('y2', yyi);
+                                                  };
+                                          }}
+                                    }
+                                }
+                                   });
+                               }
+                                    if((xx>0) && (xx<width) && (yy>0) && (yy<height)){
+                                          let Node_=d3.select(this);
+                                           var c_id=Node_.attr("id");
+                                            d3.select("#t"+c_id).attr("x",xx).attr("y",yy)
+                                            if(Node_.attr('flower_on')==1){
+                                            d3.select("#M"+cp_id).attr("transform","translate("+xx+","+yy+")")};
+                                        Node_.attr("cx",xx).attr("cy",yy);
+                                        for(let LinkID of Node_.data()[0].link_list)
+                                          { let Link_=d3.select('#'+linkPrefix+LinkID);
+                                            if(Link_.data()[0]){
+                                            if(d3.select("#"+Link_.data()[0].source).attr('id')==c_id)
+                                              { Link_.attr('x1', xx);
+                                                Link_.attr('y1', yy);
+                                              }
+                                              else{ Link_.attr('x2', xx);
+                                                    Link_.attr('y2', yy);
+                                                  };
+                                          }}
+                                    }
+                            
+                       }    ) 
+            .on("end", function(){})
+         );
+      var tekst=svg.append("text")
+            .data([{x:x0,y:y0}])
+            .attr("id","t"+cp_id)
+            .attr('x', function(d){ return d.x;})
+            .attr('y', function(d){ return d.y;})
+            .attr('text-anchor','middle')
+            .attr('dominant-baseline','central')
+            .attr("font-size", arcInnerRadius+"px")
+            .attr("fill", color_t )
+            .style("opacity", 1)
+            .attr("class","fa")
+            .text("\uf067");
+}
+ 
+
+
+function DrawFlower( svg, c_id, avaliableTypes,multi_select=0,
+                     arcOuterRadius = 64, arcInnerRadius = 19  
+                   )
+{
+   d3.select("#"+c_id).attr("flower_on",1);
+   // CREATE ARC
+   const arcMain = d3.arc()
+           .outerRadius(arcOuterRadius)
+           .innerRadius(arcInnerRadius)
+           .padAngle(0.03)
+           .cornerRadius(8);
+  
+  // CREATE PIE
+  let arcs = d3.pie()
+          .value(() => 100 / avaliableTypes.length)(avaliableTypes);
+//          console.log(c_id);
+var n_attr_order=2;
+var cid=d3.select("#"+c_id).attr("id");
+var center=svg.append("g")
+    .attr("id","M"+cid)
+    .attr("transform", function(d){return "translate("+d3.select("#"+c_id).attr("cx")+","+d3.select("#"+c_id).attr("cy")+")"})
+    .attr('class','menu_item')
+    .attr('parent_id',c_id);
+  center.selectAll("path")
+    .data(arcs)
+    .enter()
+    .append("path")
+    .attr("d", arcMain)
+    .attr("id", (d, i) => "F"+cid+"_"+ d.data.name)
+    .attr("func_call",(d) => d.data.call_func )
+    .attr("name",(d) => d.data.name )
+    .attr("item_id",(d) => d.data.item_id)
+    .attr("stroke", (d, i) => {
+                if((d3.select("#"+c_id).data()[0].attr_show[i]) && (multi_select==1)){
+                  return "black";
+                }else{
+                  return "gray";
+                }
+              })
+    .attr("stroke-width", (d) => {return "3px";})
+    .attr("fill", (d) => d.data.color)
+    .on("mouseenter",function(d,i){d3.select( "#ft"+c_id+"-" + i.index).style("opacity", 1);})
+    .on("mouseout",function(d,i){d3.select( "#ft"+c_id+"-"+ i.index).style("opacity", 0);})
+    .on("click", function(d,i){ var nd_=d3.select(this);
+                                 if(multi_select!=1){
+                                   change_menu( c_id,nd_.attr("func_call"),nd_.attr("name"),nd_.attr("item_id"));
+                                 }else{
+                                   if(d3.select(this).attr("stroke")!="black"){
+                                     d3.select("#"+d3.select("#M"+c_id).attr("parent_id"))
+                                     .data()[0].attr_show[i.index]=nd_.attr("item_id")+"::"+n_attr_order;n_attr_order++;
+                                     nd_.attr("stroke", "black" ).attr("stroke-width", "3px");
+                                   }else{
+                                     d3.select("#"+d3.select("#M"+c_id).attr("parent_id")).data()[0].attr_show[i.index]='';
+                                     nd_.attr("stroke", "grey" ).attr("stroke-width", "1px");
+                                   } 
+                                 }             
+                                });
+
+center.selectAll("newText")
+    .data(arcs)
+    .enter()
+    .append("text")
+    .attr("font-size", "15px")
+    .attr("id", (d, i) => { return "ft"+c_id+"-" + i;}) 
+    .attr("x", function(d) 
+                    { let angle = (d.startAngle + d.endAngle  - 0.1)/2;
+                      let x=d3.pointRadial(angle,arcOuterRadius)[0];
+                      if(angle > Math.PI)
+                        { x-=center.select('text').text(d.data.name).node().getBBox().width;
+                        }
+                      return x;
+                    })
+    .attr("y", (d) => {let angle = (d.startAngle + d.endAngle  - 0.1)/2;
+                       let y=d3.pointRadial(angle,arcOuterRadius)[1];
+                       if((angle>0.5*Math.PI)&&(angle <1.5*Math.PI))
+                         {y+=0.75*center.select('text').text(d.data.name).node().getBBox().height;}
+                       return y;
+                      })
+    .text(d => {return d.data.name;})    
+    .attr("fill", d => d.data.color )
+    .style("opacity", 0);
+center.selectAll("newText1")
+    .data(arcs)
+    .enter()
+    .append("text")
+           .attr("id", (d, i) => { return "fft"+c_id+"-" + i;})
+            .attr('text-anchor','middle')
+            .attr('dominant-baseline','central')
+            .attr("font-size", arcInnerRadius+"px")
+            .attr("class","fa")
+            .text("\uf067")
+     .attr("x", function(d) 
+                    { let angle = (d.startAngle + d.endAngle  - 0.1)/2;
+                      let x=d3.pointRadial(angle,.7*arcOuterRadius)[0];
+                      
+                      return x;
+                    })
+    .attr("y", (d) => {let angle = (d.startAngle + d.endAngle  - 0.1)/2;
+                       let y=d3.pointRadial(angle,.7*arcOuterRadius)[1];
+                       
+                       return y;
+                      })
+    .text(d => {return d.data.icon;})    
+    .attr("fill","black" )
+    .style("opacity", 1);
+}
+
+function   Draw_link(svg_base,fln,cp_id,sln,link2alink,link_type,link_oprt,cp_id_xx,cp_id_yy,avaliableTypes=avaliableTypes_link_cntr){
+   
+   DrawCircle(svg_base,cp_id ,link2alink ,avaliableTypes,cp_id_xx,cp_id_yy);
+                 
+                if(link2alink != "llink"){
+                  d3.select("#"+cp_id).attr("item_id",link_type);
+                  d3.select("#"+cp_id).attr("loprt",link_oprt);
+                  var l_lbl=link_type;
+                  if(TM_link_name.has(link_type)){l_lbl=TM_link_name.get(link_type)}
+                  d3.select("#t"+cp_id).text(link_oprt+' '+l_lbl); 
+                  d3.select("#"+cp_id).attr("nl_scpiece",l_lbl);
+                }else{
+                   
+                  d3.select("#"+cp_id).attr("item_id","update");
+                  d3.select("#"+cp_id).attr("loprt","");
+                  d3.select("#t"+cp_id).text("update"); 
+                  d3.select("#"+cp_id).attr("nl_scpiece","update");
+                }  
+                  d3.select("#"+cp_id).attr("link_from",fln);
+                  d3.select("#"+cp_id).attr("link_to",sln);
+                  NextLinkID++;
+                  let link_line=svg_base.append('line')
+                    .data([{source:fln,
+                            target:cp_id}])
+                   .attr('class','link')
+                   .attr('id',linkPrefix+NextLinkID)
+                   .attr('x1', function (d) { return d3.select("#"+d.source).attr("cx"); })
+                   .attr('y1', function (d) { return d3.select("#"+d.source).attr("cy"); })
+                   .attr('x2', function (d) { return d3.select("#"+d.target).attr("cx"); })
+                   .attr('y2', function (d) { return d3.select("#"+d.target).attr("cy"); })
+                   .attr("stroke", "blue")
+                   .attr("stroke-width",linkWidth);
+                  link_line.lower(); 
+                  d3.select("#"+cp_id).data()[0].link_list.push(NextLinkID);//add link to target node
+                  d3.select("#"+fln).data()[0].link_list.push(NextLinkID);//add link to source node
+                  NextLinkID++;
+                  let link_line1=svg_answer.append('line')
+                    .data([{source:cp_id,
+                            target:sln}])
+                   .attr('class','link')
+                   .attr('id',linkPrefix+NextLinkID)
+                   .attr('x1', function (d) { return d3.select("#"+d.source).attr("cx"); })
+                   .attr('y1', function (d) { return d3.select("#"+d.source).attr("cy"); })
+                   .attr('x2', function (d) { return d3.select("#"+d.target).attr("cx"); })
+                   .attr('y2', function (d) { return d3.select("#"+d.target).attr("cy"); })
+                   .attr("stroke", "red")
+                   .attr("stroke-width",linkWidth);
+                  link_line1.lower(); 
+                  d3.select("#"+sln).data()[0].link_list.push(NextLinkID);//add link to target node
+                  d3.select("#"+cp_id).data()[0].link_list.push(NextLinkID);//add link to source node
+     }
+
+function Draw_attr(svg,nd_id,at_id,at_type,at_val,at_xx,at_yy,gattr_key=0,gattr_name=''){
+   var color="lightgreen";
+   if(gattr_key==1){
+      DrawCircle(svg_base, at_id,'g_attr' ,avaliableTypes_gattr_cntr,at_xx,at_yy);
+                 d3.select("#"+at_id).attr("item_id",active_DB_name+"::xxx")
+
+      d3.select("#"+at_id).attr("nl_scpiece",gattr_name);
+      d3.select("#"+at_id).attr("n_attr_val",'');
+      d3.select("#t"+at_id).text(gattr_name); 
+      if(TM_attr_name.has(at_type)){d3.select("#"+at_id).attr("ontology_new",0).attr("ontology_deleted",0);}
+      else{                      d3.select("#"+at_id).attr("ontology_new",1).attr("ontology_deleted",0);}  
+   }else{
+      if(TM_attr_vtype.get(at_type)=="file"){
+        DrawCircle(svg_base, at_id,'n_attr' ,avaliableTypes_attr_file_cntr,at_xx,at_yy);
+      }else{
+        DrawCircle(svg_base, at_id,'n_attr' ,avaliableTypes_attr_cntr,at_xx,at_yy);
+      }
+      switch( at_type.match()){
+      case 'link_obj':
+         color='#0ff';
+         d3.select("#"+at_id).attr("stroke",color);
+         d3.select("#t"+at_id).text("l~"+at_val);
+         break;
+      case 'fomula':
+         d3.select("#"+at_id).attr("nl_scpiece",'formula');
+         d3.select("#t"+at_id).text("formula:"+at_val); 
+      case 'var':
+         d3.select("#"+at_id).attr("nl_scpiece",'var');
+         d3.select("#t"+at_id).text("var:"+at_val); 
+       default:
+         d3.select("#"+at_id).attr("nl_scpiece",TM_attr_name.get(at_type));
+         d3.select("#t"+at_id).text(TM_attr_name.get(at_type)+":"+at_val); 
+      }
+      d3.select("#"+at_id).attr("n_attr_val",at_val);
+//      d3.select("#t"+at_id).text(TM_attr_name.get(at_type)+":"+at_val); 
+   }   
+      d3.select("#"+at_id).attr("link_from",nd_id);
+      d3.select("#"+at_id).attr("link_to",-1);
+      d3.select("#"+at_id).attr("item_id",at_type);
+    
+          NextLinkID++;
+         let link_line=svg_base.append('line')
+                   .data([{source: at_id,
+                           target: nd_id}])
+                   .attr('class','link')
+                   .attr('id',linkPrefix+NextLinkID)
+                   .attr('x1', function (d) { return d3.select("#"+d.source).attr("cx"); })
+                   .attr('y1', function (d) { return d3.select("#"+d.source).attr("cy"); })
+                   .attr('x2', function (d) { return d3.select("#"+d.target).attr("cx"); })
+                   .attr('y2', function (d) { return d3.select("#"+d.target).attr("cy"); })
+                   .attr("stroke",color)
+                   .attr("stroke-width",linkWidth);
+                   
+                  link_line.lower(); 
+                  d3.select("#"+nd_id).data()[0].link_list.push(NextLinkID);//add link to target node
+                  d3.select("#"+at_id).data()[0].link_list.push(NextLinkID);//add link to source node
+     }
+
+function delete_nla(id_circle,component=0){   
+    var Node_=d3.select("#"+id_circle);
+    var M_=d3.select("#M"+id_circle);
+    if(typeof(M_)!='undefined' && M_ != null){M_.remove();}
+    if(typeof(Node_)!='undefined' && Node_ != null){
+      for(let LinkID of Node_.data()[0].link_list){
+      if(d3.select('#'+linkPrefix+LinkID)){
+        var tmp=d3.select('#'+linkPrefix+LinkID).data()[0];
+        if(typeof(tmp)!='undefined' && tmp != null){
+           var id=tmp.source;
+           if(id==id_circle){id=tmp.target;}
+           if(d3.select("#"+id) ){
+              d3.select('#'+linkPrefix+LinkID).remove();
+              if((d3.select("#"+id).attr("nl_type")=='link')||
+                 (d3.select("#"+id).attr("nl_type")=='alink')||
+                 (d3.select("#"+id).attr("nl_type")=='n_attr')||
+                 ((d3.select("#"+id).attr("nl_type")=='anode') && component==1)){delete_nla(id,component);}
+        }}}}
+        d3.select("#t"+id_circle).remove();
+        d3.select("#"+id_circle).remove();
+    }
+}
+
+
+ 
+ svg_base.on('mousemove',  (event) => {
+              if(first_link_node==null) return;     
+              var coords =  d3.pointer( event );
+              drag_line.attr('d', 'M' + d3.select("#"+first_link_node).attr("cx") + ','
+                              + d3.select("#"+first_link_node).attr("cy") + 'L' + coords[0] + ',' + coords[1])
+                       .attr("stroke", "black")
+                       .style("opacity", 1);
+                                      })
+        .on('click',(event)=>{
+             if (event.target.nodeName=='path'){ first_link_node=null; drag_line.style("opacity", 0);}
+             if (event.target.nodeName!='svg') return;
+           });
+
+var draw_line_width=3;
+// line displayed when dragging new nodes
+var drag_line = svg_base.append('path')
+                        .attr('id','draw_line')
+                        .attr("stroke", "black")
+                        .attr("stroke-width",draw_line_width)
+                        .style("opacity", 0);
+d3.select("#draw_line").lower(); 
+
+let glink_list= new Map();
+//       TM_link_Tfrom.set(id,obj.From_node);
+//       TM_link_Tto.set(id,obj.To_node);
+
+
+function show_ontology(){
+  var data_n=[];
+  var data_l=[];
+  var n_id2i=new Map();
+  var gnode_list= new Map();
+  var node_index=0;
+  active_node_menu.forEach(function(val,key){
+              const id_n=val.item_id;
+              const name_n=TM_node_name.get(id_n);
+              id_counter++;
+              var xx=200+10*id_counter;
+              var yy=300+10*id_counter;
+              DrawCircle(svg_base,"Circlepoint"+ id_counter,'gnode' ,avaliableTypes_gnode_cntr,xx,yy);
+              d3.select("#Circlepoint"+id_counter).attr("nl_scpiece",name_n);
+              d3.select("#Circlepoint"+id_counter).attr("item_id",id_n);
+              d3.select("#tCirclepoint"+id_counter).text(name_n);
+              d3.select("#Circlepoint"+id_counter).attr("ontology_new",0).attr("ontology_deleted",0);
+
+              var tt="Circlepoint"+id_counter;
+              gnode_list.set(id_n,tt);
+              var ttf=create_cl_node(tt);
+              data_n.push(ttf);
+              n_id2i.set(ttf.id,node_index++);
+  });
+  
+  active_link_menu.forEach(function(val1,key1){
+             val1.forEach(function(val,key){
+             const id_l=val.item_id;
+             const name_l=TM_link_name.get(id_l);
+              id_counter++;
+              var tt="Circlepoint"+id_counter;
+              var xx=250+10*id_counter;
+              var yy=280+10*id_counter;
+              var from_id=gnode_list.get(TM_link_Tfrom.get(id_l));
+              var to_id=gnode_list.get(TM_link_Tto.get(id_l));
+              Draw_link(svg_base,from_id,tt,to_id,'glink',id_l,'',xx,yy,avaliableTypes_gnode_cntr);
+              d3.select("#"+tt).attr("ontology_new",0).attr("ontology_deleted",0);
+              var ttf=create_cl_node(tt);
+              data_n.push(ttf);
+              n_id2i.set(ttf.id,node_index++);
+              glink_list.set(key,tt);
+              if(from_id==to_id){
+                data_l.push(create_link(n_id2i.get(tt),n_id2i.get(from_id)));
+              }else{
+                data_l.push(create_link(n_id2i.get(from_id),n_id2i.get(tt)));
+                data_l.push(create_link(n_id2i.get(tt),n_id2i.get(to_id)));
+              }
+  })});
+  const simulation = d3.forceSimulation(data_n)
+    .force("center", d3.forceCenter(x_cluster_show,y_cluster_show).strength(.3)) // Attraction to the center of the svg area
+    .force("charge", d3.forceManyBody().strength(.01)) // Nodes are attracted one each other of value is > 0
+    .force("collide", d3.forceCollide().radius(50))//.strength(.1).radius(50).iterations(1)) // Force that avoids circle overlapping
+    .force("link",d3.forceLink(data_l))//.distance(function(d){return d.distance;}).strength(1));
+// Apply these forces to the nodes and update their positions.
+// Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
+;
+
+
+  simulation.tick(100);
+  simulation.stop();
+  var node_force=simulation.nodes();
+  for(let i=0;i< data_n.length; i++){ 
+        if(node_force[i].x<10)node_force[i].x=10;
+        if(node_force[i].y<10)node_force[i].y=10;
+        if(node_force[i].x>width-10)node_force[i].x=width-10;
+        if(node_force[i].y>height-10)node_force[i].y=height-10;
+        set_obj_coordinate(data_n[i].id,node_force[i].x,node_force[i].y);
+  }  
+}              
+
+
+function show_all_attr_gnode(svg_base, cp_id,a_gtype=1){
+     var n_id=d3.select("#"+cp_id).attr("item_id");
+     var xx=parseInt(d3.select("#"+cp_id).attr("cx"),10);
+     var yy=parseInt(d3.select("#"+cp_id).attr("cy"),10);
+     const a_list=TM_nodelink_attr_show_menu.get(n_id)
+     var displ=id_counter+a_list.length/2;
+     let ii=0;
+     a_list.forEach(function(val,key){
+       const a_id=val.item_id;
+       const a_name=TM_attr_name.get(a_id)
+       if( ii>1){ 
+              id_counter++;
+              var xx1=xx+50;
+              var yy1=yy+20*(id_counter-displ);
+         Draw_attr(svg_base,cp_id,"Circlepoint"+id_counter,a_id,'',xx1,yy1,a_gtype,a_name);
+         d3.select("#Circlepoint"+id_counter).attr("dtype",TM_attr_vtype.get(a_id));
+         d3.select("#tCirclepoint"+id_counter).text(a_name+':'+d3.select("#Circlepoint"+id_counter).attr("dtype"));
+        id_counter++
+     }ii++;
+     });
+}
+
+
+function add_attr_gnode(svg_base, cp_id){
+     var n_id=d3.select("#"+cp_id).attr("item_id");
+     var xx=parseInt(d3.select("#"+cp_id).attr("cx"),10)+50;
+     var yy=parseInt(d3.select("#"+cp_id).attr("cy"),10);
+     var a_id="Circlepoint"+(++id_counter);
+     Draw_attr(svg_base,cp_id,a_id,'','',xx,yy,1);
+     d3.select("#"+a_id).attr("dtype",'none').attr("ontology_new",1);
+     d3.select("#"+a_id).attr("item_id",active_DB_name+"::xxx");
+
+}
+
+function set_attr_data_type(svg_base, cp_id,fl_name){
+   d3.select("#"+cp_id).attr("dtype",fl_name);
+   d3.select("#t"+cp_id).text(d3.select("#"+cp_id).attr("nl_scpiece")+':'+fl_name);
+}
+
+function delete_gnode(svg_base, cp_id){
+ if(d3.select("#"+cp_id).attr("ontology_new")==1){
+    delete_nla(cp_id);
+ }else{
+   if(d3.select("#"+cp_id).attr("ontology_deleted")==1){
+     d3.select("#"+cp_id).attr("ontology_deleted",0);
+     d3.select("#"+cp_id).attr('stroke-width',3);
+     d3.select("#"+cp_id).attr('stroke',d3.select("#"+cp_id).attr('fill'));
+
+   }else{
+     d3.select("#"+cp_id).attr("ontology_deleted",1);
+     d3.select("#"+cp_id).attr('stroke-width',5);
+     d3.select("#"+cp_id).attr('stroke', 'black');
+   }
+ }
+   
+}
+
+function rename_gnode(svg_base, cp_id){
+   var vvv=d3.select("#"+cp_id).attr("nl_scpiece");
+   var val=prompt("input new node name ",vvv);
+   d3.select("#"+cp_id).attr("nl_scpiece",val);
+   if(d3.select("#"+cp_id).attr("nl_type")=='g_attr'){val+=':'+d3.select("#"+cp_id).attr("dtype");}
+   d3.select("#t"+cp_id).text(val);
+   
+   if(d3.select("#"+cp_id).attr("nl_type")=='g_attr'){DrawFlower( svg_base, cp_id,avaliableTypes_data_type)}
+   
+}
+
+function ont_name_gnode(svg_base, cp_id){
+ const n_id=d3.select("#"+cp_id).attr("item_id");
+ let val='';
+ let tval='';
+ switch(d3.select("#"+cp_id).attr("nl_type")){
+   case 'gnode':  val=TM_node_name.get(n_id);tval=val;break;
+   case 'glink':  val=TM_link_name.get(n_id);tval=val;break;
+   case 'g_attr': 
+      val=TM_attr_name.get(n_id);
+      tval=val+":"+TM_attr_vtype.get(n_id);
+      d3.select("#Circlepoint"+id_counter).attr("dtype",TM_attr_vtype.get(n_id));
+      break;
+ }
+ d3.select("#"+cp_id).attr("nl_scpiece",val);
+ d3.select("#t"+cp_id).text(tval);
+}
+
+
+
+function write_save_ontology(){
+//  alert(arguments[0]);
+  clear_all();
+  show_ontology();
+}
+function save_ontology_front(){
+           let front_json={};
+           front_json.gr_item=new Array();
+           d3.selectAll('circle').each(function(d,i){
+              var Nd=d3.select(this);
+              console.log(Nd)
+              switch(Nd.attr("nl_type")){
+                case 'gnode':
+                                  console.log("node")
+
+                  let j1={};
+                  j1.id=Nd.attr("id")
+                  j1.type="node"
+                  j1.item_id=Nd.attr("item_id")
+                  j1.name=Nd.attr("nl_scpiece")
+                  j1.ontology_deleted=Nd.attr("ontology_deleted")
+                  j1.ontology_new=Nd.attr("ontology_new")
+                  j1.Id_DB_parent=""
+                  j1.link_from=""
+                  j1.link_to=""
+                  j1.dtype=""
+                  j1.cx=Nd.attr("cx")
+                  j1.cy=Nd.attr("cy")
+                  front_json.gr_item.push(j1); 
+                  console.log("done")
+                  
+                  break;
+                case 'g_attr':
+                  let j2={};
+                  console.log("attr")
+                  j2.id=Nd.attr("id")
+                  j2.type="attr"
+                  j2.item_id=Nd.attr("item_id")
+                  j2.name=Nd.attr("nl_scpiece")
+                  j2.ontology_deleted=Nd.attr("ontology_deleted")
+                  j2.ontology_new=Nd.attr("ontology_new")
+                  j2.Id_DB_parent=Nd.attr("link_from")
+                  j2.link_from=""
+                  j2.link_to=""
+                  j2.dtype=Nd.attr("dtype")
+                  j2.cx=Nd.attr("cx")
+                  j2.cy=Nd.attr("cy")
+                  front_json.gr_item.push(j2);
+                  console.log("done")
+                  break;
+                case 'glink':
+                  let j3={};
+                  console.log("link")
+                  j3.id=Nd.attr("id")
+                  j3.type="link"
+                  j3.item_id=Nd.attr("item_id")
+                  j3.name=Nd.attr("nl_scpiece")
+                  j3.ontology_deleted=Nd.attr("ontology_deleted")
+                  j3.ontology_new=Nd.attr("ontology_new")
+                  j3.link_from=Nd.attr("link_from")
+                  j3.link_to=Nd.attr("link_to")
+                  j3.Id_DB_parent=""
+                  j3.dtype=""
+                  j3.cx=Nd.attr("cx")
+                  j3.cy=Nd.attr("cy")
+                  front_json.gr_item.push(j3);
+                  console.log("done")
+                   break;
+              }    
+           });
+           let json=JSON.stringify(front_json);
+           var xmlhttp=new XMLHttpRequest();
+           xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              alert("please reload");
+            }
+            if(xmlhttp.readyState==2){ } 
+            }
+            xmlhttp.open("POST","/go/gr_db/update_ontology",true);
+            xmlhttp.send(json);
+}
+
+function Create_db(){
+  if( !DB_map.has(active_DB_id)){ 
+   var xmlhttp=new XMLHttpRequest();
+   const name=document.getElementById("DB_active").value
+   const ask_obj={id: -1 ,name: name};
+   alert("create db "+name);
+   let json=JSON.stringify(ask_obj);
+   xmlhttp.onreadystatechange=function(){
+   if(xmlhttp.readyState==4 && xmlhttp.status==200){
+              const j1=JSON.parse(xmlhttp.responseText);
+              ontology_DB_text.set(active_DB_id,j1.Id_DB);
+              ontology_DB_list.set(j1.Name,1);
+              DB_map.set(j1.Name,j1.Id_DB);
+              }
+   if(xmlhttp.readyState==2){ } 
+   }
+   xmlhttp.open("POST","/go/gr_db/create_db",true);
+   xmlhttp.send(json);
+  }else{
+    alert("Sorry DB exists ");
+  }
+}
+
+</script>
+
+<BR>looking forward
+
+<table id='inup_table' border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>
+
+<P>
+<table id='total_table' border=1 bordercolor="#0066dd" cellspacing=0 cellpadding=7>
+
+<input type='hidden'   id='ask_attr' value=''>
+<input type='hidden'   id='ask_node' value=''>
+<input type='hidden'   id='ask_link' value=''>
+<input type='hidden'   id='ask_attr_value_list' value=''>
+<input type='hidden'   id='search_name' value=''>
+<input type='hidden'   id='file_show_info' value=''>
+<input type='hidden'   id='link_attr_file_show_info' value=''>
+<input type='hidden'   id='responseText' value='|5426634|csv|\t|'>
+</body>
+</html>
