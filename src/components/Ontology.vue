@@ -40,17 +40,17 @@ let items = [node_0, node_1, link_0, link_1];
 const ontology = ref(items);
 
 
-function eventHandler(event){
-  alert(event.target.innerText)
-  console.log(item)
+function sendValue(value){
+  alert(value.id)
+  console.log(value)
 }
 </script>
 
 <template>
   <h1>ontology component</h1>
-  <div class="row" id="onto">
-    <div class="column" id="item" v-for="item in items" :key="item.id">
-      <div v-on:click="eventHandler" class="item">{{ item }}</div>
+  <div class="row" >
+    <div class="column" v-for="item in items" :key="item.id">
+      <div v-on:click="sendValue(item)" class="item">{{ item }}</div>
     </div>
   </div>
   <button>add new object</button>
@@ -61,6 +61,13 @@ function eventHandler(event){
   float: left;
   width: 25%;
   padding: 0 10px;
+}
+
+.item {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  text-align: left;
+  background-color: #f1f1f1;
 }
 
 
