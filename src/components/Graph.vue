@@ -8,7 +8,7 @@ function creatSVG() {
   var height = 500;
 
   //Create SVG element
-  var svg = d3.select(svgRef.value);
+  var svg = d3.select("#container_graph");
 
   //Create and append rectangle element
   svg
@@ -26,7 +26,7 @@ onMounted(() => {
 
 <template>
   <h1>d3_graph</h1>
-  <svg ref="container_graph" width="500" height="500"></svg>
+  <svg id="container_graph" width="500" height="500"></svg>
 </template>
 
 <style scoped></style>
