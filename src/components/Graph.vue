@@ -2,7 +2,22 @@
 import * as d3 from "d3";
 import { ref, onMounted } from "vue";
 
-const svgRef = ref(null);
+
+function addNodes(){
+  let svg = d3.select("#container_graph");
+  let temp_data = [{ "name": "A" }, { "name": "B" }, { "name": "C" }, { "name": "D" }];
+  let node = svg.append("g")
+  .selectAll("nodes")
+  .data(temp_data)
+  .enter()
+
+  let circles = node.append("circle")
+  .attr("cx", ()=>{return Math.random()*500})
+  .attr("cy", ()=>{return Math.random()*500})
+  .attr("r", 40)
+  .style("fill", "rgb(239, 192, 80)")
+}
+
 function creatSVG() {
   var width = 500;
   var height = 500;
@@ -20,7 +35,8 @@ function creatSVG() {
   console.log("imdone");
 }
 onMounted(() => {
-  creatSVG();
+  // creatSVG();
+  addNodes()
 });
 </script>
 
