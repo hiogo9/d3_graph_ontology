@@ -41,7 +41,7 @@ const ontology = ref(items);
 
 
 function sendValue(value){
-  alert(value.id)
+  alert(value.id+ value.type)
   console.log(value)
 }
 </script>
